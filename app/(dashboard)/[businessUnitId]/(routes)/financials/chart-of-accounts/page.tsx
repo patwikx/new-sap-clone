@@ -25,6 +25,9 @@ import { AlertModal } from "@/components/modals/alert-modal"
 import { useParams } from "next/navigation"
 import { toast } from "sonner"
 import axios from "axios"
+import { CreateGlAccountModal } from "./components/create-gl-accounts-modal"
+import { EditGlAccountModal } from "./components/edit-gl-accounts-modal"
+
 
 interface GlAccount {
   id: string
@@ -33,6 +36,9 @@ interface GlAccount {
   normalBalance: string
   description?: string
   isControlAccount: boolean
+  accountTypeId: string
+  accountCategoryId?: string
+  accountGroupId?: string
   accountType: {
     name: string
   }
@@ -54,6 +60,8 @@ const ChartOfAccountsPage = () => {
   const [balanceFilter, setBalanceFilter] = useState<string>("all")
 
   // Modal states
+  const [createAccountOpen, setCreateAccountOpen] = useState(false)
+  const [editAccountOpen, setEditAccountOpen] = useState(false)
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false)
   const [selectedAccount, setSelectedAccount] = useState<GlAccount | null>(null)
 
@@ -155,7 +163,7 @@ const ChartOfAccountsPage = () => {
             Manage your general ledger accounts and account structure
           </p>
         </div>
-        <Button onClick={() => toast.info("Account creation coming soon")} className="gap-2">
+        <Button onClick={() => setCreateAccountOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
           Add Account
         </Button>
@@ -300,7 +308,10 @@ const ChartOfAccountsPage = () => {
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuItem
-                      onClick={() => toast.info("Edit functionality coming soon")}
+                      onClick={() => {
+                        setSelectedAccount(account)
+                        setEditAccountOpen(true)
+                      }}
                       className="gap-2"
                     >
                       <Edit className="h-4 w-4" />
@@ -338,6 +349,29 @@ const ChartOfAccountsPage = () => {
       </Card>
 
       {/* Modals */}
+      <CreateGlAccountModal
+        isOpen={createAccountOpen}
+        onClose={() => setCreateAccountOpen(false)}
+        onSuccess={() => {
+          fetchAccounts()
+          setCreateAccountOpen(false)
+        }}
+      />
+
+      <EditGlAccountModal
+        isOpen={editAccountOpen}
+        onClose={() => {
+          setEditAccountOpen(false)
+          setSelectedAccount(null)
+        }}
+        onSuccess={() => {
+          fetchAccounts()
+          setEditAccountOpen(false)
+          setSelectedAccount(null)
+        }}
+        account={selectedAccount}
+      />
+
       <AlertModal
         isOpen={deleteAccountOpen}
         onClose={() => {

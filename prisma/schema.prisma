@@ -902,6 +902,7 @@ model JournalEntry {
   remarks      String?
 
   referenceNumber  String?
+  memo             String?
   currency         String?
   exchangeRate     Decimal?    @db.Decimal(18, 8)
   fxRateType       FxRateType?
