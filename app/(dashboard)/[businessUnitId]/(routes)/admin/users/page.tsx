@@ -15,20 +15,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AlertModal } from "@/components/modals/alert-modal"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 import axios from "axios"
 import { CreateUserModal } from "./components/create-user-modal"
 import { EditUserModal } from "./components/edit-user-modal"
 import { ChangePasswordModal } from "./components/change-password-modal"
+import { useCurrentUser } from "@/lib/current-user"
 
 interface User {
   id: string
@@ -72,72 +67,89 @@ const UsersPage = () => {
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const [deleteUserOpen, setDeleteUserOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const router = useRouter();
+
+  const session = useCurrentUser();
+
+  if (!session?.role?.role) {
+    router.push("/auth/sign-in") // Redirect to sign-in if no session
+  }
+
+  // Check if the user is authorized for this specific business unit
+  const isAuthorizedForUnit = session?.assignments?.some(
+    (assignment) => assignment.businessUnitId === businessUnitId,
+  )
+
+  if (!isAuthorizedForUnit) {
+    router.push(`/${businessUnitId}/not-authorized`) // Redirect if not authorized for this business unit
+  }
 
   // Fetch data
   const fetchUsers = async () => {
     try {
       const response = await axios.get(`/api/${businessUnitId}/users`, {
         headers: {
-          'x-business-unit-id': businessUnitId,
+          "x-business-unit-id": businessUnitId,
         },
-      });
-      setUsers(response.data);
+      })
+      setUsers(response.data)
     } catch (error) {
-      toast.error("Failed to fetch users");
-      console.error(error);
+      toast.error("Failed to fetch users")
+      console.error(error)
     }
-  };
+  }
 
   const fetchRoles = async () => {
     try {
       const response = await axios.get(`/api/${businessUnitId}/roles`, {
         headers: {
-          'x-business-unit-id': businessUnitId,
+          "x-business-unit-id": businessUnitId,
         },
-      });
-      setRoles(response.data);
+      })
+      setRoles(response.data)
     } catch (error) {
-      toast.error("Failed to fetch roles");
-      console.error(error);
+      toast.error("Failed to fetch roles")
+      console.error(error)
     }
-  };
+  }
 
   const fetchBusinessUnits = async () => {
     try {
-      // This API call does not need the header as it's not unit-specific
-      const response = await axios.get(`/api/business-units`);
-      setBusinessUnits(response.data);
+      // --- MODIFICATION START ---
+      // Add includeAll=true query parameter to fetch all business units
+      const response = await axios.get(`/api/business-units?includeAll=true`)
+      // --- MODIFICATION END ---
+      setBusinessUnits(response.data)
     } catch (error) {
-      toast.error("Failed to fetch business units");
-      console.error(error);
+      toast.error("Failed to fetch business units")
+      console.error(error)
     }
-  };
+  }
 
   useEffect(() => {
     const loadData = async () => {
-      setLoading(true);
-      await Promise.all([fetchUsers(), fetchRoles(), fetchBusinessUnits()]);
-      setLoading(false);
-    };
-    if (businessUnitId) {
-        loadData();
+      setLoading(true)
+      await Promise.all([fetchUsers(), fetchRoles(), fetchBusinessUnits()])
+      setLoading(false)
     }
-  }, [businessUnitId]);
+    if (businessUnitId) {
+      loadData()
+    }
+  }, [businessUnitId]) // Added businessUnitId to dependency array for re-fetch on unit switch
 
   // Filter users
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          user.username.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || 
-                          (statusFilter === "active" && user.isActive) ||
-                          (statusFilter === "inactive" && !user.isActive);
-    
-    const matchesRole = roleFilter === "all" || 
-                        user.assignments.some(assignment => assignment.role.role === roleFilter);
-
-    return matchesSearch && matchesStatus && matchesRole;
-  });
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.username.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "active" && user.isActive) ||
+      (statusFilter === "inactive" && !user.isActive)
+    const matchesRole =
+      roleFilter === "all" || user.assignments.some((assignment) => assignment.role.role === roleFilter)
+    return matchesSearch && matchesStatus && matchesRole
+  })
 
   // User actions
   const handleToggleUserStatus = async (user: User) => {
@@ -147,70 +159,70 @@ const UsersPage = () => {
         { isActive: !user.isActive },
         {
           headers: {
-            'x-business-unit-id': businessUnitId,
+            "x-business-unit-id": businessUnitId,
           },
-        }
-      );
-      toast.success(`User ${user.isActive ? 'deactivated' : 'activated'} successfully`);
-      fetchUsers();
+        },
+      )
+      toast.success(`User ${user.isActive ? "deactivated" : "activated"} successfully`)
+      fetchUsers()
     } catch (error) {
-      toast.error("Failed to update user status");
-      console.error(error);
+      toast.error("Failed to update user status")
+      console.error(error)
     }
-  };
+  }
 
   const handleDeleteUser = async () => {
-    if (!selectedUser) return;
-    
+    if (!selectedUser) return
+
     try {
       await axios.delete(`/api/${businessUnitId}/users/${selectedUser.id}`, {
         headers: {
-          'x-business-unit-id': businessUnitId,
+          "x-business-unit-id": businessUnitId,
         },
-      });
-      toast.success("User deleted successfully");
-      setDeleteUserOpen(false);
-      setSelectedUser(null);
-      fetchUsers();
+      })
+      toast.success("User deleted successfully")
+      setDeleteUserOpen(false)
+      setSelectedUser(null)
+      fetchUsers()
     } catch (error) {
-      toast.error("Failed to delete user");
-      console.error(error);
+      toast.error("Failed to delete user")
+      console.error(error)
     }
-  };
+  }
 
   const getUserRoleInCurrentBU = (user: User) => {
-    const assignment = user.assignments.find(a => a.businessUnitId === businessUnitId);
-    return assignment?.role.role || "No Role";
-  };
+    const assignment = user.assignments.find((a) => a.businessUnitId === businessUnitId)
+    return assignment?.role.role || "No Role"
+  }
 
   const getUserStatusBadge = (isActive: boolean) => (
     <Badge variant={isActive ? "default" : "secondary"} className="gap-1">
       {isActive ? <UserCheck className="h-3 w-3" /> : <UserX className="h-3 w-3" />}
       {isActive ? "Active" : "Inactive"}
     </Badge>
-  );
+  )
 
   const getRoleBadge = (role: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      "Admin": "destructive",
-      "Manager": "default",
-      "Accountant": "secondary",
-      "Cashier": "outline"
-    };
+      Admin: "destructive",
+      Manager: "default",
+      Accountant: "secondary",
+      Cashier: "outline",
+    }
     return (
       <Badge variant={variants[role] || "outline"} className="gap-1">
         <Shield className="h-3 w-3" />
         {role}
       </Badge>
-    );
-  };
+    )
+  }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
-    );
+    )
   }
 
   return (
@@ -219,9 +231,7 @@ const UsersPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-          <p className="text-muted-foreground">
-            Manage users, roles, and permissions across your organization
-          </p>
+          <p className="text-muted-foreground">Manage users, roles, and permissions across your organization</p>
         </div>
         <Button onClick={() => setCreateUserOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
@@ -246,7 +256,7 @@ const UsersPage = () => {
             <UserCheck className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.filter(u => u.isActive).length}</div>
+            <div className="text-2xl font-bold">{users.filter((u) => u.isActive).length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -255,7 +265,7 @@ const UsersPage = () => {
             <UserX className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.filter(u => !u.isActive).length}</div>
+            <div className="text-2xl font-bold">{users.filter((u) => !u.isActive).length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -319,9 +329,7 @@ const UsersPage = () => {
       <Card>
         <CardHeader>
           <CardTitle>Users ({filteredUsers.length})</CardTitle>
-          <CardDescription>
-            Manage user accounts, roles, and permissions
-          </CardDescription>
+          <CardDescription>Manage user accounts, roles, and permissions</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -334,7 +342,11 @@ const UsersPage = () => {
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={`https://avatar.vercel.sh/${user.username}`} />
                     <AvatarFallback>
-                      {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                      {user.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-1">
@@ -345,15 +357,13 @@ const UsersPage = () => {
                     <p className="text-sm text-muted-foreground">{user.username}</p>
                   </div>
                 </div>
-
                 <div className="flex items-center space-x-4">
                   <div className="text-right space-y-1">
                     {getRoleBadge(getUserRoleInCurrentBU(user))}
                     <p className="text-xs text-muted-foreground">
-                      {user.assignments.length} business unit{user.assignments.length !== 1 ? 's' : ''}
+                      {user.assignments.length} business unit{user.assignments.length !== 1 ? "s" : ""}
                     </p>
                   </div>
-
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
@@ -364,8 +374,8 @@ const UsersPage = () => {
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem
                         onClick={() => {
-                          setSelectedUser(user);
-                          setEditUserOpen(true);
+                          setSelectedUser(user)
+                          setEditUserOpen(true)
                         }}
                         className="gap-2"
                       >
@@ -374,18 +384,15 @@ const UsersPage = () => {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => {
-                          setSelectedUser(user);
-                          setChangePasswordOpen(true);
+                          setSelectedUser(user)
+                          setChangePasswordOpen(true)
                         }}
                         className="gap-2"
                       >
                         <Key className="h-4 w-4" />
                         Change Password
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleToggleUserStatus(user)}
-                        className="gap-2"
-                      >
+                      <DropdownMenuItem onClick={() => handleToggleUserStatus(user)} className="gap-2">
                         {user.isActive ? (
                           <>
                             <UserX className="h-4 w-4" />
@@ -401,8 +408,8 @@ const UsersPage = () => {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => {
-                          setSelectedUser(user);
-                          setDeleteUserOpen(true);
+                          setSelectedUser(user)
+                          setDeleteUserOpen(true)
                         }}
                         className="gap-2 text-destructive focus:text-destructive"
                       >
@@ -414,7 +421,6 @@ const UsersPage = () => {
                 </div>
               </div>
             ))}
-
             {filteredUsers.length === 0 && (
               <div className="text-center py-12">
                 <UserX className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -435,53 +441,50 @@ const UsersPage = () => {
         isOpen={createUserOpen}
         onClose={() => setCreateUserOpen(false)}
         onSuccess={() => {
-          fetchUsers();
-          setCreateUserOpen(false);
+          fetchUsers()
+          setCreateUserOpen(false)
         }}
         roles={roles}
         businessUnits={businessUnits}
       />
-
       <EditUserModal
         isOpen={editUserOpen}
         onClose={() => {
-          setEditUserOpen(false);
-          setSelectedUser(null);
+          setEditUserOpen(false)
+          setSelectedUser(null)
         }}
         onSuccess={() => {
-          fetchUsers();
-          setEditUserOpen(false);
-          setSelectedUser(null);
+          fetchUsers()
+          setEditUserOpen(false)
+          setSelectedUser(null)
         }}
         user={selectedUser}
         roles={roles}
         businessUnits={businessUnits}
       />
-
       <ChangePasswordModal
         isOpen={changePasswordOpen}
         onClose={() => {
-          setChangePasswordOpen(false);
-          setSelectedUser(null);
+          setChangePasswordOpen(false)
+          setSelectedUser(null)
         }}
         onSuccess={() => {
-          setChangePasswordOpen(false);
-          setSelectedUser(null);
+          setChangePasswordOpen(false)
+          setSelectedUser(null)
         }}
         user={selectedUser}
       />
-
       <AlertModal
         isOpen={deleteUserOpen}
         onClose={() => {
-          setDeleteUserOpen(false);
-          setSelectedUser(null);
+          setDeleteUserOpen(false)
+          setSelectedUser(null)
         }}
         onConfirm={handleDeleteUser}
         loading={false} // You might want to connect this to a state for the delete operation
       />
     </div>
-  );
-};
+  )
+}
 
-export default UsersPage;
+export default UsersPage

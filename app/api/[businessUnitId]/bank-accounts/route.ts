@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
@@ -11,6 +11,11 @@ export async function GET(req: NextRequest) {
 
     const businessUnitId = req.headers.get("x-business-unit-id")
 
+    // --- DEBUGGING LOGS START ---
+    console.log("API GET: Received x-business-unit-id:", businessUnitId)
+    console.log("API GET: User session assignments:", JSON.stringify(session.user.assignments, null, 2))
+    // --- DEBUGGING LOGS END ---
+
     if (!businessUnitId) {
       return new NextResponse("Missing x-business-unit-id header", {
         status: 400,
@@ -18,9 +23,11 @@ export async function GET(req: NextRequest) {
     }
 
     // Check if user has access to this business unit
-    const hasAccess = session.user.assignments.some(
-      (assignment) => assignment.businessUnitId === businessUnitId
-    )
+    const hasAccess = session.user.assignments.some((assignment) => assignment.businessUnitId === businessUnitId)
+
+    // --- DEBUGGING LOGS START ---
+    console.log("API GET: User has access to unit:", hasAccess, "for businessUnitId:", businessUnitId)
+    // --- DEBUGGING LOGS END ---
 
     if (!hasAccess) {
       return new NextResponse("Forbidden", { status: 403 })
@@ -28,19 +35,19 @@ export async function GET(req: NextRequest) {
 
     const bankAccounts = await prisma.bankAccount.findMany({
       where: {
-        businessUnitId: businessUnitId
+        businessUnitId: businessUnitId,
       },
       include: {
         glAccount: {
           select: {
             accountCode: true,
-            name: true
-          }
-        }
+            name: true,
+          },
+        },
       },
       orderBy: {
-        name: 'asc'
-      }
+        name: "asc",
+      },
     })
 
     return NextResponse.json(bankAccounts)
@@ -59,6 +66,11 @@ export async function POST(req: NextRequest) {
 
     const businessUnitId = req.headers.get("x-business-unit-id")
 
+    // --- DEBUGGING LOGS START ---
+    console.log("API POST: Received x-business-unit-id:", businessUnitId)
+    console.log("API POST: User session assignments:", JSON.stringify(session.user.assignments, null, 2))
+    // --- DEBUGGING LOGS END ---
+
     if (!businessUnitId) {
       return new NextResponse("Missing x-business-unit-id header", {
         status: 400,
@@ -67,9 +79,7 @@ export async function POST(req: NextRequest) {
 
     // Check if user has admin access to this business unit
     const hasAdminAccess = session.user.assignments.some(
-      (assignment) => 
-        assignment.businessUnitId === businessUnitId && 
-        assignment.role.role === 'Admin'
+      (assignment) => assignment.businessUnitId === businessUnitId && assignment.role.role === "Admin",
     )
 
     if (!hasAdminAccess) {
@@ -88,8 +98,8 @@ export async function POST(req: NextRequest) {
       where: {
         accountNumber,
         bankName,
-        businessUnitId
-      }
+        businessUnitId,
+      },
     })
 
     if (existingAccount) {
@@ -106,16 +116,16 @@ export async function POST(req: NextRequest) {
         iban,
         swiftCode,
         branch,
-        businessUnitId
+        businessUnitId,
       },
       include: {
         glAccount: {
           select: {
             accountCode: true,
-            name: true
-          }
-        }
-      }
+            name: true,
+          },
+        },
+      },
     })
 
     return NextResponse.json(bankAccount, { status: 201 })

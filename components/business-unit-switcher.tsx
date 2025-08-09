@@ -21,7 +21,7 @@ import type { BusinessUnitItem } from "@/types/business-unit-types"
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<typeof PopoverTrigger>
 
 interface BusinessUnitSwitcherProps extends PopoverTriggerProps {
-  items: BusinessUnitItem[]
+  items: BusinessUnitItem[] // This prop is expected to be pre-filtered by the parent Server Component (e.g., DashboardLayout)
 }
 
 export default function BusinessUnitSwitcher({ className, items = [] }: BusinessUnitSwitcherProps) {
@@ -29,23 +29,21 @@ export default function BusinessUnitSwitcher({ className, items = [] }: Business
   const params = useParams()
   const router = useRouter()
 
-  // --- THIS IS THE KEY LOGIC CHANGE ---
   // Determine if the switcher should be an interactive dropdown.
-  // This will be true for Admins (items.length > 1) and false for regular users (items.length <= 1).
+  // This will be true for Admins (items.length > 1, as they get all units)
+  // and false for regular users (items.length <= 1, as they only see their assigned units).
   const isSwitcherActive = items.length > 1
-
   const formattedItems = items.map((item) => ({
     label: item.name,
     value: item.id,
   }))
-
   const currentBusinessUnit = formattedItems.find((item) => item.value === params.businessUnitId)
-
   const [open, setOpen] = React.useState(false)
 
   const onBusinessUnitSelect = (businessUnit: { value: string; label: string }) => {
     setOpen(false)
     router.push(`/${businessUnit.value}`)
+    router.refresh()
   }
 
   // --- RENDER A STATIC, NON-CLICKABLE DISPLAY FOR REGULAR USERS ---
@@ -73,7 +71,6 @@ export default function BusinessUnitSwitcher({ className, items = [] }: Business
           role="combobox"
           aria-expanded={open}
           aria-label="Select a Business Unit"
-          // Removed w-full and added a calculated width for margin
           className={cn("justify-between", "w-[calc(100%-theme(spacing.4))]", className)}
         >
           <Store className="mr-2 h-4 w-4" />
