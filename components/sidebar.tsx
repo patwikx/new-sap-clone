@@ -45,7 +45,7 @@ export interface NavItem {
 const navigation: NavItem[] = [
   {
     title: "Dashboard",
-    href: "/dashboard",
+    href: "/",
     icon: BarChart3,
   },
   {
