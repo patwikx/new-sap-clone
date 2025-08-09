@@ -313,6 +313,11 @@ model BusinessPartner {
   type           BusinessPartnerType
   phone          String?
   email          String?
+  address        String?
+  contactPerson  String?
+  paymentTerms   String?
+  creditLimit    Decimal?
+  tinId          String?
   loyaltyPoints  Int                 @default(0)
   businessUnitId String
   businessUnit   BusinessUnit        @relation(fields: [businessUnitId], references: [id])
@@ -663,6 +668,10 @@ model BankAccount {
   id               String            @id @default(uuid())
   name             String
   bankName         String
+  currency         String?
+  iban             String?
+  swiftCode        String?
+  branch           String?
   accountNumber    String
   glAccountId      String            @unique
   glAccount        GlAccount         @relation(fields: [glAccountId], references: [id])
@@ -783,6 +792,7 @@ model GlAccount {
   id             String       @id @default(uuid())
   accountCode    String
   name           String
+  description    String?
   balance        Decimal      @default(0) @db.Decimal(19, 4)
   accountTypeId  String
   accountType    AccountType  @relation(fields: [accountTypeId], references: [id])
