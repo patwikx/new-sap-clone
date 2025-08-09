@@ -1,14 +1,12 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import type React from "react"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
   Building2,
   Users,
@@ -29,19 +27,20 @@ import {
   Archive,
   Calendar,
   Computer,
-} from "lucide-react";
-import UserProfileLogout from "./user-profile-logout";
+} from "lucide-react"
+import UserProfileLogout from "./user-profile-logout"
+import BusinessUnitSwitcher from "./business-unit-switcher"
+import type { BusinessUnitItem } from "@/types/business-unit-types"
 
 // 1. DATA STRUCTURE AND NAVIGATION ITEMS
 // =================================================================
 export interface NavItem {
-  title: string;
-  href?: string;
-  icon: React.ComponentType<{ className?: string }>;
-  children?: NavItem[];
+  title: string
+  href?: string
+  icon: React.ComponentType<{ className?: string }>
+  children?: NavItem[]
 }
 
-// Href values are relative paths, which will be prefixed with the business unit ID.
 const navigation: NavItem[] = [
   {
     title: "Dashboard",
@@ -116,29 +115,39 @@ const navigation: NavItem[] = [
       { title: "Accounting Periods", href: "/admin/accounting-periods", icon: Calendar },
     ],
   },
-];
+]
 
 // 2. PROP TYPE DEFINITIONS
 // =================================================================
 interface SidebarProps {
-  businessUnitId: string;
+  businessUnitId: string
+  businessUnits: BusinessUnitItem[]
+  // The onBusinessUnitChange prop is no longer directly used by Sidebar
+  // as BusinessUnitSwitcher handles navigation internally.
+  // onBusinessUnitChange?: (id: string) => void
 }
 
 interface SidebarLinkProps {
-  item: NavItem;
-  businessUnitId: string;
+  item: NavItem
+  businessUnitId: string
 }
 
 // 3. SIDEBAR LINK SUB-COMPONENT
 // =================================================================
 function SidebarLink({ item, businessUnitId }: SidebarLinkProps) {
-  const pathname = usePathname();
-  const href = item.href ? `/${businessUnitId}${item.href}` : "";
-  const isActive = pathname === href;
+  const pathname = usePathname()
+  const href = item.href ? `/${businessUnitId}${item.href}` : ""
+  const isActive = pathname === href
 
   if (item.children) {
+    // Determine if any child link is active to set default open state for collapsible
+    const isAnyChildActive = item.children.some((child) => {
+      const childHref = child.href ? `/${businessUnitId}${child.href}` : ""
+      return pathname === childHref
+    })
+
     return (
-      <Collapsible>
+      <Collapsible defaultOpen={isAnyChildActive}>
         <CollapsibleTrigger asChild>
           <Button variant="ghost" className="w-full justify-start font-normal">
             <item.icon className="mr-2 h-4 w-4" />
@@ -154,58 +163,52 @@ function SidebarLink({ item, businessUnitId }: SidebarLinkProps) {
           </div>
         </CollapsibleContent>
       </Collapsible>
-    );
+    )
   }
 
   return (
-    <Button
-      variant={isActive ? "secondary" : "ghost"}
-      className="w-full justify-start font-normal"
-      asChild
-    >
+    <Button variant={isActive ? "secondary" : "ghost"} className="w-full justify-start font-normal" asChild>
       <Link href={href}>
         <item.icon className="mr-2 h-4 w-4" />
         {item.title}
       </Link>
     </Button>
-  );
+  )
 }
 
 // 4. MAIN SIDEBAR COMPONENT
 // =================================================================
-export function Sidebar({ businessUnitId }: SidebarProps) {
+export function Sidebar({ businessUnitId, businessUnits }: SidebarProps) {
   return (
-    // This is the main flex-col container that organizes the sidebar
     <div className="flex h-full flex-col border-r bg-background">
-      
-      {/* Static Header Section: This part never scrolls */}
+      {/* Static Header Section */}
       <div className="p-6">
         <div className="flex items-center space-x-2">
           <Calculator className="h-6 w-6" />
           <span className="text-lg font-semibold whitespace-nowrap">PLM Acctg Solutions</span>
         </div>
       </div>
+       
       <Separator />
-
-      {/* Scrollable Navigation Section: flex-1 makes it fill available space */}
+<div className="mt-2 mb-2 ml-4">
+  <BusinessUnitSwitcher items={businessUnits} />
+</div>
+         <Separator />
+      {/* Pass the full list of business units to the switcher */}
+   
+      {/* Scrollable Navigation Section */}
       <div className="flex-1 overflow-y-auto p-3">
         <div className="flex flex-col space-y-1">
           {navigation.map((item) => (
-            <SidebarLink 
-              key={item.title} 
-              item={item} 
-              businessUnitId={businessUnitId} 
-            />
+            <SidebarLink key={item.title} item={item} businessUnitId={businessUnitId} />
           ))}
         </div>
       </div>
-      
-      {/* Logout Section: mt-auto pushes this to the absolute bottom */}
+      {/* Logout Section */}
       <div className="mt-auto p-3">
         <Separator className="mb-3" />
         <UserProfileLogout />
       </div>
-
     </div>
-  );
+  )
 }

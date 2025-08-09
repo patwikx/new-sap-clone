@@ -15,6 +15,9 @@ export const getUserById = async (id: string) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id },
+            include: {
+        role: true, // Include the related role
+      }
     });
     
     return user;

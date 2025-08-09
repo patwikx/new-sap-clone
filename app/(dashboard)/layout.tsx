@@ -3,6 +3,8 @@ import { auth } from '@/auth'
 import { headers } from 'next/headers'
 import { Sidebar } from '@/components/sidebar'
 import { Toaster } from '@/components/ui/sonner'
+import { BusinessUnitItem } from '@/types/business-unit-types'
+import { prisma } from '@/lib/prisma'
 
 export const metadata = {
   title: 'TWC POS',
@@ -31,15 +33,26 @@ export default async function DashboardLayout({
     redirect(defaultUnitId ? `/${defaultUnitId}` : '/select-unit');
     return null; // Stop rendering since we are redirecting
   }
-
+  let businessUnits: BusinessUnitItem[] = [];
   // Check if the user is authorized for this specific business unit
   const isAdmin = session.user.assignments.some(
-    (assignment) => assignment.role.role === 'Administrator'
+    (assignment) => assignment.role.role === 'Admin'
   );
 
   const isAuthorizedForUnit = session.user.assignments.some(
     (assignment) => assignment.businessUnitId === businessUnitId
   );
+    if (isAdmin) {
+        businessUnits = await prisma.businessUnit.findMany({
+            orderBy: { name: 'asc' },
+            select: {
+                id: true,
+                name: true,
+            }
+        });
+    } else {
+        businessUnits = session.user.assignments.map((assignment) => assignment.businessUnit);
+    }
 
   // If not an admin and not authorized for this unit, redirect them
   if (!isAdmin && !isAuthorizedForUnit) {
@@ -48,12 +61,14 @@ export default async function DashboardLayout({
     return null; // Stop rendering
   }
 
+  
+
   return (
     <>
       <div className="flex h-screen">
         <div className="hidden md:flex md:w-64 md:flex-col md:flex-shrink-0 md:border-r">
           {/* Pass the validated businessUnitId as a prop to the Sidebar */}
-          <Sidebar businessUnitId={businessUnitId} />
+          <Sidebar businessUnitId={businessUnitId} businessUnits={businessUnits} />
         </div>
 
         {/* Main Content Area */}
