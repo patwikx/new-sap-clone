@@ -1,7 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcryptjs from "bcryptjs";
-import { LoginSchema } from "@/lib/validations/schemas"; // Assuming this exists
+import { LoginSchema } from "@/lib/validations/login-schema"; // Assuming this exists
 import { getUserByUsername } from "@/lib/auth-actions/auth-users";
 
 export const authConfig = {

@@ -3,7 +3,7 @@
 import * as z from "zod";
 import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
-import { LoginSchema } from "@/lib/validations/schemas";
+import { LoginSchema } from "@/lib/validations/login-schema";
 import { getUserByUsername } from "./auth-users";
 
 

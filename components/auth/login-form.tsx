@@ -6,7 +6,7 @@ import { useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
-import { LoginSchema } from "@/lib/validations/schemas"
+import { LoginSchema } from "@/lib/validations/login-schema"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox" // Added Checkbox
 import {
@@ -20,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { FormError } from "@/components/form-error"
 import { FormSuccess } from "@/components/form-success"
-import { Mail, Lock, Loader2, Eye, EyeOff, ChromeIcon as Google, Facebook } from 'lucide-react' // Added Eye, EyeOff, Google, Facebook
+import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react' // Added Eye, EyeOff, Google, Facebook
 import { login } from "@/lib/auth-actions/login"
 
 export const LoginForm = () => {

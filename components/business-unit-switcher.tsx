@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/popover"
 import { useParams, useRouter } from "next/navigation"
 import { useBusinessUnitModal } from "@/hooks/use-bu-modal"
-import { BusinessUnitItem } from "@/types/db-types"
+import { BusinessUnitItem } from "@/types/business-unit-types"
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<typeof PopoverTrigger>
 
