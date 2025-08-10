@@ -12,12 +12,10 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import {
   ClipboardList,
   Plus,
   Trash2,
-  MapPin,
   Home,
   ChevronRight,
   ChevronsUpDown,

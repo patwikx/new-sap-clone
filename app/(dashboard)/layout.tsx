@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner"
 import type { BusinessUnitItem } from "@/types/business-unit-types"
 import { prisma } from "@/lib/prisma"
 import "../globals.css" // Import globals.css at the top of the file
+import { Header } from "@/components/header"
 
 export const metadata = {
   title: "PLM Acctg Solutions, Inc.",
@@ -98,18 +99,27 @@ export default async function DashboardLayout({
     return null // Stop rendering
   }
 
-  return (
+return (
     <>
       <div className="flex h-screen">
         <div className="hidden md:flex md:w-64 md:flex-col md:flex-shrink-0 md:border-r">
           {/* Pass the validated businessUnitId as a prop to the Sidebar */}
           <Sidebar businessUnitId={businessUnitId} businessUnits={businessUnits} />
         </div>
-        {/* Main Content Area */}
-        <main className="flex-1 p-6 overflow-y-auto">
-          {children}
-          <Toaster />
-        </main>
+
+        {/* Main Content Area - This should be a flex column */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header at the top */}
+          <Header
+            businessUnitName={businessUnits.find((bu) => bu.id === businessUnitId)?.name}
+          />
+
+          {/* Main content below header */}
+          <main className="flex-1 p-6 overflow-y-auto">
+            {children}
+            <Toaster />
+          </main>
+        </div>
       </div>
     </>
   )
