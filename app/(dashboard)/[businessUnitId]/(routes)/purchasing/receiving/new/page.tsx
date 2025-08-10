@@ -56,7 +56,7 @@ interface PurchaseOrder {
   }
   items: {
     id: string
-    description: string
+   // description: string
     quantity: number
     openQuantity: number
     unitPrice: number
@@ -355,13 +355,16 @@ export default function NewGoodsReceiptPage() {
                     const poItem = selectedPO.items.find(
                       (item) => item.id === form.watch(`items.${index}.purchaseOrderItemId`),
                     )
+                    
+                    // Add this guard clause to prevent the error
+                    if (!poItem) return null;
 
                     return (
                       <div key={field.id} className="grid grid-cols-16 gap-2 items-start">
                         <div className="col-span-4">
                           <div className="space-y-1">
-                            <p className="text-sm font-medium">{poItem?.description}</p>
-                            {poItem?.inventoryItem && (
+                           {/* <p className="text-sm font-medium">{poItem.description}</p>*/}
+                            {poItem.inventoryItem && (
                               <Badge variant="outline" className="text-xs">
                                 <Package className="h-3 w-3 mr-1" />
                                 {poItem.inventoryItem.name}
@@ -370,10 +373,10 @@ export default function NewGoodsReceiptPage() {
                           </div>
                         </div>
                         <div className="col-span-1 flex items-center justify-center h-9">
-                          <span className="text-sm">{poItem?.quantity || 0}</span>
+                          <span className="text-sm">{poItem.quantity || 0}</span>
                         </div>
                         <div className="col-span-1 flex items-center justify-center h-9">
-                          <span className="text-sm font-medium">{poItem?.openQuantity || 0}</span>
+                          <span className="text-sm font-medium">{poItem.openQuantity || 0}</span>
                         </div>
                         <div className="col-span-2">
                           <FormField
@@ -386,7 +389,7 @@ export default function NewGoodsReceiptPage() {
                                     type="number"
                                     step="0.01"
                                     min="0"
-                                    max={poItem?.openQuantity || 0}
+                                    max={poItem.openQuantity || 0}
                                     placeholder="0"
                                     {...field}
                                   />

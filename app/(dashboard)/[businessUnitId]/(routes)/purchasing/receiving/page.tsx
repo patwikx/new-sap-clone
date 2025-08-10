@@ -309,7 +309,7 @@ const GoodsReceiptPage = () => {
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuItem
-                      onClick={() => toast.info("View functionality coming soon")}
+                      onClick={() => router.push(`/${businessUnitId}/purchasing/receiving/${receipt.id}`)}
                       className="gap-2"
                     >
                       <Eye className="h-4 w-4" />

@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { businessUnitId: string; requestId: string } }
+export const dynamic = 'force-dynamic'
+
+export async function GET(
+  req: NextRequest
 ) {
   try {
     const session = await auth()
@@ -12,7 +13,84 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 })
     }
 
-    const { businessUnitId, requestId } = params
+    const businessUnitId = req.headers.get("x-business-unit-id");
+    const requestId = req.headers.get("x-request-id");
+
+    if (!businessUnitId || !requestId) {
+      return new NextResponse("Missing required headers", { status: 400 });
+    }
+
+    // Check if user has access to this business unit
+    const hasAccess = session.user.assignments.some(
+      (assignment) => assignment.businessUnitId === businessUnitId
+    )
+
+    if (!hasAccess) {
+      return new NextResponse("Forbidden", { status: 403 })
+    }
+
+    const purchaseRequest = await prisma.purchaseRequest.findUnique({
+      where: { id: requestId },
+      include: {
+        requestor: {
+          select: {
+            name: true
+          }
+        },
+        approver: {
+          select: {
+            name: true
+          }
+        },
+        items: {
+          include: {
+            uom: {
+              select: {
+                symbol: true
+              }
+            }
+          }
+        }
+      }
+    })
+
+    if (!purchaseRequest) {
+      return new NextResponse("Purchase request not found", { status: 404 })
+    }
+
+    // Calculate total estimated amount
+    const totalEstimatedAmount = purchaseRequest.items.reduce((sum, item) => {
+      const qty = parseFloat(item.requestedQuantity.toString())
+      // Note: estimatedPrice field doesn't exist in schema, using 0 for now
+      const price = 0
+      return sum + (qty * price)
+    }, 0)
+
+    return NextResponse.json({
+      ...purchaseRequest,
+      totalEstimatedAmount
+    })
+  } catch (error) {
+    console.error("[PURCHASE_REQUEST_GET]", error)
+    return new NextResponse("Internal error", { status: 500 })
+  }
+}
+
+export async function DELETE(
+  req: NextRequest
+) {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return new NextResponse("Unauthorized", { status: 401 })
+    }
+
+    const businessUnitId = req.headers.get("x-business-unit-id");
+    const requestId = req.headers.get("x-request-id");
+
+    if (!businessUnitId || !requestId) {
+      return new NextResponse("Missing required headers", { status: 400 });
+    }
 
     // Check if user has access to this business unit
     const hasAccess = session.user.assignments.some(

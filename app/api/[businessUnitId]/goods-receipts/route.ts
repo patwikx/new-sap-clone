@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
                 name: true,
               },
             },
-            location: { // Corrected relation name from inventoryLocation
+            location: {
               select: {
                 name: true
               }
@@ -100,19 +100,22 @@ export async function GET(req: NextRequest) {
 
     // Calculate totals for each receipt
     const receiptsWithTotals = goodsReceipts.map(receipt => {
-      const totalValue = receipt.items.reduce((sum: number, item: ReceivingItemWithDetails) => {
-          if (!item.purchaseOrderItem) return sum;
-          const qty = parseFloat(item.quantity.toString())
-          const price = parseFloat(item.purchaseOrderItem.unitPrice.toString())
-          return sum + (qty * price)
-      }, 0)
+        const totalValue = receipt.items.reduce((sum, item) => {
+            // FIX: Add a guard clause to safely handle items without a PO link
+            if (!item.purchaseOrderItem) {
+                return sum;
+            }
+            const qty = parseFloat(item.quantity.toString())
+            const price = parseFloat(item.purchaseOrderItem.unitPrice.toString())
+            return sum + (qty * price)
+        }, 0)
 
-      return {
-          ...receipt,
-          totalQuantity: receipt.items.reduce((sum: number, item: ReceivingItem) => 
-              sum + parseFloat(item.quantity.toString()), 0),
-          totalValue
-      }
+        return {
+            ...receipt,
+            totalQuantity: receipt.items.reduce((sum, item) => 
+                sum + parseFloat(item.quantity.toString()), 0),
+            totalValue
+        }
     })
 
     return NextResponse.json(receiptsWithTotals)

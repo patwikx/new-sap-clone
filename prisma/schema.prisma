@@ -158,6 +158,20 @@ enum FxRateType {
   CUSTOM
 }
 
+enum BusinessPartnerType {
+  CUSTOMER
+  VENDOR
+  LEAD
+}
+
+enum OrderStatus {
+  PREPARING
+  SERVED
+  PAID
+  CANCELLED
+  OPEN
+}
+
 // -----------------------------
 // Users, Roles, Business Units
 // -----------------------------
@@ -206,6 +220,69 @@ model User {
   journalBatchesPosted     JournalBatch[]            @relation("BatchPostedBy")
   attachmentsUploaded      Attachment[]              @relation("AttachmentUploader")
   auditLogs                AuditLog[]
+
+  // New createdBy relations
+  createdRoles                       Roles[]                      @relation("RoleCreatedBy")
+  createdBusinessUnits               BusinessUnit[]               @relation("BusinessUnitCreatedBy")
+  createdNumberingSeries             NumberingSeries[]            @relation("NumberingSeriesCreatedBy")
+  createdBusinessPartners            BusinessPartner[]            @relation("BusinessPartnerCreatedBy")
+  createdSalesQuotations             SalesQuotation[]             @relation("SalesQuotationCreatedBy")
+  createdSalesQuotationItems         SalesQuotationItem[]         @relation("SalesQuotationItemCreatedBy")
+  createdSalesOrders                 SalesOrder[]                 @relation("SalesOrderCreatedBy")
+  createdSalesOrderItems             SalesOrderItem[]             @relation("SalesOrderItemCreatedBy")
+  createdDeliveryItems               DeliveryItem[]               @relation("DeliveryItemCreatedBy")
+  createdARInvoices                  ARInvoice[]                  @relation("ARInvoiceCreatedBy")
+  createdARInvoiceItems              ARInvoiceItem[]              @relation("ARInvoiceItemCreatedBy")
+  createdPurchaseRequestItems        PurchaseRequestItem[]        @relation("PurchaseRequestItemCreatedBy")
+  createdPurchaseOrders              PurchaseOrder[]              @relation("PurchaseOrderCreatedBy")
+  createdPurchaseOrderItems          PurchaseOrderItem[]          @relation("PurchaseOrderItemCreatedBy")
+  createdReceivingItems              ReceivingItem[]              @relation("ReceivingItemCreatedBy")
+  createdAPInvoices                  APInvoice[]                  @relation("APInvoiceCreatedBy")
+  createdAPInvoiceItems              APInvoiceItem[]              @relation("APInvoiceItemCreatedBy")
+  createdBankAccounts                BankAccount[]                @relation("BankAccountCreatedBy")
+  createdIncomingPayments            IncomingPayment[]            @relation("IncomingPaymentCreatedBy")
+  createdOutgoingPayments            OutgoingPayment[]            @relation("OutgoingPaymentCreatedBy")
+  createdDeposits                    Deposit[]                    @relation("DepositCreatedBy")
+  createdAccountTypes                AccountType[]                @relation("AccountTypeCreatedBy")
+  createdAccountCategories           AccountCategory[]            @relation("AccountCategoryCreatedBy")
+  createdAccountGroups               AccountGroup[]               @relation("AccountGroupCreatedBy")
+  createdPostingControls             PostingControl[]             @relation("PostingControlCreatedBy")
+  createdJournalBatches              JournalBatch[]               @relation("JournalBatchCreatedBy")
+  createdDimensions                  Dimension[]                  @relation("DimensionCreatedBy")
+  createdDimensionValues             DimensionValue[]             @relation("DimensionValueCreatedBy")
+  createdARInvoiceItemTaxes          ARInvoiceItemTax[]           @relation("ARInvoiceItemTaxCreatedBy")
+  createdAPInvoiceItemTaxes          APInvoiceItemTax[]           @relation("APInvoiceItemTaxCreatedBy")
+  createdJournalEntryLineTaxes       JournalEntryLineTax[]        @relation("JournalEntryLineTaxCreatedBy")
+  createdIncomingPaymentWithholdings IncomingPaymentWithholding[] @relation("IncomingPaymentWithholdingCreatedBy")
+  createdOutgoingPaymentWithholdings OutgoingPaymentWithholding[] @relation("OutgoingPaymentWithholdingCreatedBy")
+  createdARPaymentApplications       ARPaymentApplication[]       @relation("ARPaymentApplicationCreatedBy")
+  createdAPPaymentApplications       APPaymentApplication[]       @relation("APPaymentApplicationCreatedBy")
+  createdIntercompanyTransactions    IntercompanyTransaction[]    @relation("IntercompanyTransactionCreatedBy")
+  createdInventoryLocations          InventoryLocation[]          @relation("InventoryLocationCreatedBy")
+  createdInventoryItems              InventoryItem[]              @relation("InventoryItemCreatedBy")
+  createdInventoryStocks             InventoryStock[]             @relation("InventoryStockCreatedBy")
+  createdInventoryMovements          InventoryMovement[]          @relation("InventoryMovementCreatedBy")
+  createdStockRequisitionItems       StockRequisitionItem[]       @relation("StockRequisitionItemCreatedBy")
+  createdMenuItems                   MenuItem[]                   @relation("MenuItemCreatedBy")
+  createdMenuCategories              MenuCategory[]               @relation("MenuCategoryCreatedBy")
+  createdModifierGroups              ModifierGroup[]              @relation("ModifierGroupCreatedBy")
+  createdModifiers                   Modifier[]                   @relation("ModifierCreatedBy")
+  createdRecipes                     Recipe[]                     @relation("RecipeCreatedBy")
+  createdRecipeItems                 RecipeItem[]                 @relation("RecipeItemCreatedBy")
+  createdUoMs                        UoM[]                        @relation("UoMCreatedBy")
+  createdPosTerminals                PosTerminal[]                @relation("PosTerminalCreatedBy")
+  createdTables                      Table[]                      @relation("TableCreatedBy")
+  createdReservations                Reservation[]                @relation("ReservationCreatedBy")
+  createdShifts                      Shift[]                      @relation("ShiftCreatedBy")
+  createdOrderItems                  OrderItem[]                  @relation("OrderItemCreatedBy")
+  createdPayments                    Payment[]                    @relation("PaymentCreatedBy")
+  createdPaymentMethods              PaymentMethod[]              @relation("PaymentMethodCreatedBy")
+  createdDiscounts                   Discount[]                   @relation("DiscountCreatedBy")
+  createdFinancialReports            FinancialReport[]            @relation("FinancialReportCreatedBy")
+  createdFinancialReportLines        FinancialReportLine[]        @relation("FinancialReportLineCreatedBy")
+  createdBudgets                     Budget[]                     @relation("BudgetCreatedBy")
+  createdBudgetLines                 BudgetLine[]                 @relation("BudgetLineCreatedBy")
+  createdAttachmentLinks             AttachmentLink[]             @relation("AttachmentLinkCreatedBy")
 }
 
 model Roles {
@@ -213,6 +290,8 @@ model Roles {
   role        String             @unique
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
+  createdById String?
+  createdBy   User?              @relation("RoleCreatedBy", fields: [createdById], references: [id])
   assignments UserBusinessUnit[]
   users       User[] // Relation back to User model
 }
@@ -224,6 +303,8 @@ model BusinessUnit {
   reportingCurrency  String?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
+  createdById        String?
+  createdBy          User?              @relation("BusinessUnitCreatedBy", fields: [createdById], references: [id])
   userAssignments    UserBusinessUnit[]
 
   // Module-specific data
@@ -295,6 +376,9 @@ model NumberingSeries {
   documentType   DocumentType
   businessUnitId String
   businessUnit   BusinessUnit @relation(fields: [businessUnitId], references: [id])
+  createdAt      DateTime     @default(now())
+  createdById    String?
+  createdBy      User?        @relation("NumberingSeriesCreatedBy", fields: [createdById], references: [id])
 
   @@unique([documentType, businessUnitId])
 }
@@ -302,12 +386,6 @@ model NumberingSeries {
 // -----------------------------
 // Business Partners (Customers & Vendors)
 // -----------------------------
-
-enum BusinessPartnerType {
-  CUSTOMER
-  VENDOR
-  LEAD
-}
 
 model BusinessPartner {
   id             String              @id @default(uuid())
@@ -324,6 +402,10 @@ model BusinessPartner {
   loyaltyPoints  Int                 @default(0)
   businessUnitId String
   businessUnit   BusinessUnit        @relation(fields: [businessUnitId], references: [id])
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  createdById    String?
+  createdBy      User?               @relation("BusinessPartnerCreatedBy", fields: [createdById], references: [id])
 
   // Relations to documents
   salesQuotations  SalesQuotation[]
@@ -336,9 +418,6 @@ model BusinessPartner {
   reservations     Reservation[]
   outgoingPayments OutgoingPayment[]
   incomingPayments IncomingPayment[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 // -----------------------------
@@ -346,28 +425,26 @@ model BusinessPartner {
 // -----------------------------
 
 model SalesQuotation {
-  id              String          @id @default(uuid())
-  docNum          String          @unique
+  id              String               @id @default(uuid())
+  docNum          String               @unique
   businessUnitId  String
-  businessUnit    BusinessUnit    @relation(fields: [businessUnitId], references: [id])
+  businessUnit    BusinessUnit         @relation(fields: [businessUnitId], references: [id])
   bpCode          String
-  businessPartner BusinessPartner @relation(fields: [bpCode], references: [bpCode])
+  businessPartner BusinessPartner      @relation(fields: [bpCode], references: [bpCode])
   ownerId         String
-  owner           User            @relation("OwnerToSQ", fields: [ownerId], references: [id])
-
-  postingDate  DateTime
-  validUntil   DateTime
-  documentDate DateTime
-  remarks      String?
-
-  totalAmount Decimal?       @db.Decimal(19, 4)
-  status      DocumentStatus @default(OPEN)
-
-  items      SalesQuotationItem[]
-  salesOrder SalesOrder?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  owner           User                 @relation("OwnerToSQ", fields: [ownerId], references: [id])
+  postingDate     DateTime
+  validUntil      DateTime
+  documentDate    DateTime
+  remarks         String?
+  totalAmount     Decimal?             @db.Decimal(19, 4)
+  status          DocumentStatus       @default(OPEN)
+  items           SalesQuotationItem[]
+  salesOrder      SalesOrder?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  createdById     String?
+  createdBy       User?                @relation("SalesQuotationCreatedBy", fields: [createdById], references: [id])
 }
 
 model SalesQuotationItem {
@@ -380,33 +457,34 @@ model SalesQuotationItem {
   quantity    Decimal        @db.Decimal(19, 6)
   unitPrice   Decimal        @db.Decimal(19, 4)
   lineTotal   Decimal        @db.Decimal(19, 4)
+  createdAt   DateTime       @default(now())
+  createdById String?
+  createdBy   User?          @relation("SalesQuotationItemCreatedBy", fields: [createdById], references: [id])
 }
 
 model SalesOrder {
-  id              String          @id @default(uuid())
-  docNum          String          @unique
-  baseQuotationId String?         @unique
-  baseQuotation   SalesQuotation? @relation(fields: [baseQuotationId], references: [id])
+  id              String           @id @default(uuid())
+  docNum          String           @unique
+  baseQuotationId String?          @unique
+  baseQuotation   SalesQuotation?  @relation(fields: [baseQuotationId], references: [id])
   businessUnitId  String
-  businessUnit    BusinessUnit    @relation(fields: [businessUnitId], references: [id])
+  businessUnit    BusinessUnit     @relation(fields: [businessUnitId], references: [id])
   bpCode          String
-  businessPartner BusinessPartner @relation(fields: [bpCode], references: [bpCode])
+  businessPartner BusinessPartner  @relation(fields: [bpCode], references: [bpCode])
   ownerId         String
-  owner           User            @relation("OwnerToSO", fields: [ownerId], references: [id])
-
-  postingDate  DateTime
-  deliveryDate DateTime
-  documentDate DateTime
-  remarks      String?
-
-  totalAmount Decimal?       @db.Decimal(19, 4)
-  status      DocumentStatus @default(OPEN)
-
-  items      SalesOrderItem[]
-  deliveries Delivery[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  owner           User             @relation("OwnerToSO", fields: [ownerId], references: [id])
+  postingDate     DateTime
+  deliveryDate    DateTime
+  documentDate    DateTime
+  remarks         String?
+  totalAmount     Decimal?         @db.Decimal(19, 4)
+  status          DocumentStatus   @default(OPEN)
+  items           SalesOrderItem[]
+  deliveries      Delivery[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  createdById     String?
+  createdBy       User?            @relation("SalesOrderCreatedBy", fields: [createdById], references: [id])
 }
 
 model SalesOrderItem {
@@ -420,6 +498,9 @@ model SalesOrderItem {
   unitPrice    Decimal    @db.Decimal(19, 4)
   lineTotal    Decimal    @db.Decimal(19, 4)
   openQuantity Decimal    @db.Decimal(19, 6)
+  createdAt    DateTime   @default(now())
+  createdById  String?
+  createdBy    User?      @relation("SalesOrderItemCreatedBy", fields: [createdById], references: [id])
 }
 
 model Delivery {
@@ -433,18 +514,14 @@ model Delivery {
   businessPartner  BusinessPartner @relation(fields: [bpCode], references: [bpCode])
   createdBy        User            @relation("CreatorToDelivery", fields: [createdById], references: [id])
   createdById      String
-
-  postingDate  DateTime
-  documentDate DateTime
-  remarks      String?
-
-  status DocumentStatus @default(OPEN)
-
-  items     DeliveryItem[]
-  arInvoice ARInvoice?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  postingDate      DateTime
+  documentDate     DateTime
+  remarks          String?
+  status           DocumentStatus  @default(OPEN)
+  items            DeliveryItem[]
+  arInvoice        ARInvoice?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 }
 
 model DeliveryItem {
@@ -455,57 +532,59 @@ model DeliveryItem {
   menuItem    MenuItem @relation(fields: [itemCode], references: [id])
   description String
   quantity    Decimal  @db.Decimal(19, 6)
+  createdAt   DateTime @default(now())
+  createdById String?
+  createdBy   User?    @relation("DeliveryItemCreatedBy", fields: [createdById], references: [id])
 }
 
 model ARInvoice {
-  id              String          @id @default(uuid())
-  docNum          String          @unique
-  baseDeliveryId  String?         @unique
-  baseDelivery    Delivery?       @relation(fields: [baseDeliveryId], references: [id])
-  businessUnitId  String
-  businessUnit    BusinessUnit    @relation(fields: [businessUnitId], references: [id])
-  bpCode          String
-  businessPartner BusinessPartner @relation(fields: [bpCode], references: [bpCode])
-
-  postingDate  DateTime
-  dueDate      DateTime
-  documentDate DateTime
-  remarks      String?
-
-  totalAmount      Decimal          @db.Decimal(19, 4)
-  amountPaid       Decimal          @default(0) @db.Decimal(19, 4)
-  status           DocumentStatus   @default(OPEN)
-  settlementStatus SettlementStatus @default(OPEN)
+  id               String                 @id @default(uuid())
+  docNum           String                 @unique
+  baseDeliveryId   String?                @unique
+  baseDelivery     Delivery?              @relation(fields: [baseDeliveryId], references: [id])
+  businessUnitId   String
+  businessUnit     BusinessUnit           @relation(fields: [businessUnitId], references: [id])
+  bpCode           String
+  businessPartner  BusinessPartner        @relation(fields: [bpCode], references: [bpCode])
+  postingDate      DateTime
+  dueDate          DateTime
+  documentDate     DateTime
+  remarks          String?
+  totalAmount      Decimal                @db.Decimal(19, 4)
+  amountPaid       Decimal                @default(0) @db.Decimal(19, 4)
+  status           DocumentStatus         @default(OPEN)
+  settlementStatus SettlementStatus       @default(OPEN)
   clearedAt        DateTime?
-
-  items          ARInvoiceItem[]
-  journalEntryId String?         @unique
-  journalEntry   JournalEntry?   @relation(fields: [journalEntryId], references: [id])
-  orders         Order[]
-
-  applications ARPaymentApplication[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  items            ARInvoiceItem[]
+  journalEntryId   String?                @unique
+  journalEntry     JournalEntry?          @relation(fields: [journalEntryId], references: [id])
+  orders           Order[]
+  applications     ARPaymentApplication[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  createdById      String?
+  createdBy        User?                  @relation("ARInvoiceCreatedBy", fields: [createdById], references: [id])
 
   @@index([businessUnitId, dueDate])
   @@index([bpCode, settlementStatus])
 }
 
 model ARInvoiceItem {
-  id          String    @id @default(uuid())
+  id          String             @id @default(uuid())
   docId       String
-  document    ARInvoice @relation(fields: [docId], references: [id], onDelete: Cascade)
+  document    ARInvoice          @relation(fields: [docId], references: [id], onDelete: Cascade)
   itemCode    String
-  menuItem    MenuItem  @relation(fields: [itemCode], references: [id])
+  menuItem    MenuItem           @relation(fields: [itemCode], references: [id])
   description String
-  quantity    Decimal   @db.Decimal(19, 6)
-  unitPrice   Decimal   @db.Decimal(19, 4)
-  lineTotal   Decimal   @db.Decimal(19, 4)
+  quantity    Decimal            @db.Decimal(19, 6)
+  unitPrice   Decimal            @db.Decimal(19, 4)
+  lineTotal   Decimal            @db.Decimal(19, 4)
   glAccountId String
-  glAccount   GlAccount @relation(fields: [glAccountId], references: [id])
-
-  taxes ARInvoiceItemTax[]
+  glAccount   GlAccount          @relation(fields: [glAccountId], references: [id])
+  taxes       ARInvoiceItemTax[]
+  createdAt   DateTime           @default(now())
+  createdById String?
+  createdBy   User?              @relation("ARInvoiceItemCreatedBy", fields: [createdById], references: [id])
 }
 
 // -----------------------------
@@ -539,34 +618,35 @@ model PurchaseRequestItem {
   uomId             String?
   uom               UoM?            @relation(fields: [uomId], references: [id])
   notes             String?
+  createdAt         DateTime        @default(now())
+  createdById       String?
+  createdBy         User?           @relation("PurchaseRequestItemCreatedBy", fields: [createdById], references: [id])
 }
 
 model PurchaseOrder {
-  id                String          @id @default(uuid())
-  poNumber          String          @unique
-  purchaseRequestId String          @unique
-  purchaseRequest   PurchaseRequest @relation(fields: [purchaseRequestId], references: [id])
+  id                String              @id @default(uuid())
+  poNumber          String              @unique
+  purchaseRequestId String              @unique
+  purchaseRequest   PurchaseRequest     @relation(fields: [purchaseRequestId], references: [id])
   businessUnitId    String
-  businessUnit      BusinessUnit    @relation(fields: [businessUnitId], references: [id])
+  businessUnit      BusinessUnit        @relation(fields: [businessUnitId], references: [id])
   bpCode            String
-  businessPartner   BusinessPartner @relation(fields: [bpCode], references: [bpCode])
+  businessPartner   BusinessPartner     @relation(fields: [bpCode], references: [bpCode])
   ownerId           String
-  owner             User            @relation("OwnerToPO", fields: [ownerId], references: [id])
-
-  postingDate  DateTime
-  deliveryDate DateTime
-  documentDate DateTime
-  remarks      String?
-
-  totalAmount Decimal?       @db.Decimal(19, 4)
-  status      DocumentStatus @default(OPEN)
-
-  items      PurchaseOrderItem[]
-  receivings Receiving[]
-  apInvoice  APInvoice?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  owner             User                @relation("OwnerToPO", fields: [ownerId], references: [id])
+  postingDate       DateTime
+  deliveryDate      DateTime
+  documentDate      DateTime
+  remarks           String?
+  totalAmount       Decimal?            @db.Decimal(19, 4)
+  status            DocumentStatus      @default(OPEN)
+  items             PurchaseOrderItem[]
+  receivings        Receiving[]
+  apInvoice         APInvoice?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  createdById       String?
+  createdBy         User?               @relation("PurchaseOrderCreatedBy", fields: [createdById], references: [id])
 }
 
 model PurchaseOrderItem {
@@ -583,94 +663,95 @@ model PurchaseOrderItem {
   lineTotal       Decimal         @db.Decimal(19, 4)
   openQuantity    Decimal         @db.Decimal(19, 6)
   receivingItems  ReceivingItem[] // Add this relation back
+  createdAt       DateTime        @default(now())
+  createdById     String?
+  createdBy       User?           @relation("PurchaseOrderItemCreatedBy", fields: [createdById], references: [id])
 }
 
 model Receiving {
-  id                  String        @id @default(uuid())
-  docNum              String        @unique
+  id                  String          @id @default(uuid())
+  docNum              String          @unique
   basePurchaseOrderId String
-  basePurchaseOrder   PurchaseOrder @relation(fields: [basePurchaseOrderId], references: [id])
+  basePurchaseOrder   PurchaseOrder   @relation(fields: [basePurchaseOrderId], references: [id])
   businessUnitId      String
-  businessUnit        BusinessUnit  @relation(fields: [businessUnitId], references: [id])
+  businessUnit        BusinessUnit    @relation(fields: [businessUnitId], references: [id])
   receivedById        String
-  receivedBy          User          @relation("ReceiverToReceiving", fields: [receivedById], references: [id])
-
-  postingDate  DateTime
-  documentDate DateTime
-  remarks      String?
-  deliveryNote String?
-
-  items ReceivingItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  receivedBy          User            @relation("ReceiverToReceiving", fields: [receivedById], references: [id])
+  postingDate         DateTime
+  documentDate        DateTime
+  remarks             String?
+  deliveryNote        String?
+  items               ReceivingItem[]
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 }
 
 model ReceivingItem {
-  id                 String              @id @default(uuid())
-  docId              String
-  document           Receiving           @relation(fields: [docId], references: [id], onDelete: Cascade)
-  inventoryItemId    String
-  inventoryItem      InventoryItem       @relation(fields: [inventoryItemId], references: [id])
-  quantity           Decimal             @db.Decimal(19, 6)
-  expiryDate         DateTime?
-  inventoryMovements InventoryMovement[] // 1:n to movements
-
+  id                  String              @id @default(uuid())
+  docId               String
+  document            Receiving           @relation(fields: [docId], references: [id], onDelete: Cascade)
+  inventoryItemId     String
+  inventoryItem       InventoryItem       @relation(fields: [inventoryItemId], references: [id])
+  quantity            Decimal             @db.Decimal(19, 6)
+  expiryDate          DateTime?
+  inventoryMovements  InventoryMovement[] // 1:n to movements
   // --- ADD THESE LINES ---
   purchaseOrderItemId String? // Optional foreign key
-  purchaseOrderItem   PurchaseOrderItem? @relation(fields: [purchaseOrderItemId], references: [id])
+  purchaseOrderItem   PurchaseOrderItem?  @relation(fields: [purchaseOrderItemId], references: [id])
   locationId          String? // Optional foreign key
-  location            InventoryLocation? @relation(fields: [locationId], references: [id])
+  location            InventoryLocation?  @relation(fields: [locationId], references: [id])
   batchNumber         String?
   notes               String?
+  createdAt           DateTime            @default(now())
+  createdById         String?
+  createdBy           User?               @relation("ReceivingItemCreatedBy", fields: [createdById], references: [id])
 }
 
 model APInvoice {
-  id                  String          @id @default(uuid())
-  docNum              String          @unique
-  basePurchaseOrderId String?         @unique
-  basePurchaseOrder   PurchaseOrder?  @relation(fields: [basePurchaseOrderId], references: [id])
+  id                  String                 @id @default(uuid())
+  docNum              String                 @unique
+  basePurchaseOrderId String?                @unique
+  basePurchaseOrder   PurchaseOrder?         @relation(fields: [basePurchaseOrderId], references: [id])
   businessUnitId      String
-  businessUnit        BusinessUnit    @relation(fields: [businessUnitId], references: [id])
+  businessUnit        BusinessUnit           @relation(fields: [businessUnitId], references: [id])
   bpCode              String
-  businessPartner     BusinessPartner @relation(fields: [bpCode], references: [bpCode])
-
-  postingDate  DateTime
-  dueDate      DateTime
-  documentDate DateTime
-  remarks      String?
-
-  totalAmount      Decimal          @db.Decimal(19, 4)
-  amountPaid       Decimal          @default(0) @db.Decimal(19, 4)
-  status           DocumentStatus   @default(OPEN)
-  settlementStatus SettlementStatus @default(OPEN)
-  clearedAt        DateTime?
-
-  items          APInvoiceItem[]
-  journalEntryId String?         @unique
-  journalEntry   JournalEntry?   @relation(fields: [journalEntryId], references: [id])
-
-  applications APPaymentApplication[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  businessPartner     BusinessPartner        @relation(fields: [bpCode], references: [bpCode])
+  postingDate         DateTime
+  dueDate             DateTime
+  documentDate        DateTime
+  remarks             String?
+  totalAmount         Decimal                @db.Decimal(19, 4)
+  amountPaid          Decimal                @default(0) @db.Decimal(19, 4)
+  status              DocumentStatus         @default(OPEN)
+  settlementStatus    SettlementStatus       @default(OPEN)
+  clearedAt           DateTime?
+  items               APInvoiceItem[]
+  journalEntryId      String?                @unique
+  journalEntry        JournalEntry?          @relation(fields: [journalEntryId], references: [id])
+  applications        APPaymentApplication[]
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  createdById         String?
+  createdBy           User?                  @relation("APInvoiceCreatedBy", fields: [createdById], references: [id])
 
   @@index([businessUnitId, dueDate])
   @@index([bpCode, settlementStatus])
 }
 
 model APInvoiceItem {
-  id          String    @id @default(uuid())
+  id          String             @id @default(uuid())
   docId       String
-  document    APInvoice @relation(fields: [docId], references: [id], onDelete: Cascade)
+  document    APInvoice          @relation(fields: [docId], references: [id], onDelete: Cascade)
   description String
-  quantity    Decimal   @db.Decimal(19, 6)
-  unitPrice   Decimal   @db.Decimal(19, 4)
-  lineTotal   Decimal   @db.Decimal(19, 4)
+  quantity    Decimal            @db.Decimal(19, 6)
+  unitPrice   Decimal            @db.Decimal(19, 4)
+  lineTotal   Decimal            @db.Decimal(19, 4)
   glAccountId String
-  glAccount   GlAccount @relation(fields: [glAccountId], references: [id])
-
-  taxes APInvoiceItemTax[]
+  glAccount   GlAccount          @relation(fields: [glAccountId], references: [id])
+  taxes       APInvoiceItemTax[]
+  createdAt   DateTime           @default(now())
+  createdById String?
+  createdBy   User?              @relation("APInvoiceItemCreatedBy", fields: [createdById], references: [id])
 }
 
 // -----------------------------
@@ -694,50 +775,48 @@ model BankAccount {
   outgoingPayments OutgoingPayment[]
   deposits         Deposit[]
   createdAt        DateTime          @default(now())
+  createdById      String?
+  createdBy        User?             @relation("BankAccountCreatedBy", fields: [createdById], references: [id])
 }
 
 model IncomingPayment {
-  id              String          @id @default(uuid())
-  docNum          String          @unique
+  id              String                       @id @default(uuid())
+  docNum          String                       @unique
   businessUnitId  String
-  businessUnit    BusinessUnit    @relation(fields: [businessUnitId], references: [id])
+  businessUnit    BusinessUnit                 @relation(fields: [businessUnitId], references: [id])
   bpCode          String
-  businessPartner BusinessPartner @relation(fields: [bpCode], references: [bpCode])
-
-  paymentDate   DateTime
-  amount        Decimal     @db.Decimal(19, 4)
-  bankAccountId String
-  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id])
-
-  journalEntryId String?       @unique
-  journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
-
-  applications ARPaymentApplication[]
-  withholdings IncomingPaymentWithholding[]
-
-  createdAt DateTime @default(now())
+  businessPartner BusinessPartner              @relation(fields: [bpCode], references: [bpCode])
+  paymentDate     DateTime
+  amount          Decimal                      @db.Decimal(19, 4)
+  bankAccountId   String
+  bankAccount     BankAccount                  @relation(fields: [bankAccountId], references: [id])
+  journalEntryId  String?                      @unique
+  journalEntry    JournalEntry?                @relation(fields: [journalEntryId], references: [id])
+  applications    ARPaymentApplication[]
+  withholdings    IncomingPaymentWithholding[]
+  createdAt       DateTime                     @default(now())
+  createdById     String?
+  createdBy       User?                        @relation("IncomingPaymentCreatedBy", fields: [createdById], references: [id])
 }
 
 model OutgoingPayment {
-  id              String          @id @default(uuid())
-  docNum          String          @unique
+  id              String                       @id @default(uuid())
+  docNum          String                       @unique
   businessUnitId  String
-  businessUnit    BusinessUnit    @relation(fields: [businessUnitId], references: [id])
+  businessUnit    BusinessUnit                 @relation(fields: [businessUnitId], references: [id])
   bpCode          String
-  businessPartner BusinessPartner @relation(fields: [bpCode], references: [bpCode])
-
-  paymentDate   DateTime
-  amount        Decimal     @db.Decimal(19, 4)
-  bankAccountId String
-  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id])
-
-  journalEntryId String?       @unique
-  journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
-
-  applications APPaymentApplication[]
-  withholdings OutgoingPaymentWithholding[]
-
-  createdAt DateTime @default(now())
+  businessPartner BusinessPartner              @relation(fields: [bpCode], references: [bpCode])
+  paymentDate     DateTime
+  amount          Decimal                      @db.Decimal(19, 4)
+  bankAccountId   String
+  bankAccount     BankAccount                  @relation(fields: [bankAccountId], references: [id])
+  journalEntryId  String?                      @unique
+  journalEntry    JournalEntry?                @relation(fields: [journalEntryId], references: [id])
+  applications    APPaymentApplication[]
+  withholdings    OutgoingPaymentWithholding[]
+  createdAt       DateTime                     @default(now())
+  createdById     String?
+  createdBy       User?                        @relation("OutgoingPaymentCreatedBy", fields: [createdById], references: [id])
 }
 
 model Deposit {
@@ -752,6 +831,8 @@ model Deposit {
   status         PeriodStatus   @default(OPEN)
   createdAt      DateTime       @default(now())
   journalEntries JournalEntry[]
+  createdById    String?
+  createdBy      User?          @relation("DepositCreatedBy", fields: [createdById], references: [id])
 }
 
 // -----------------------------
@@ -764,6 +845,9 @@ model AccountType {
   defaultNormalBalance NormalBalance
   accounts             GlAccount[]
   postingControl       PostingControl[]
+  createdAt            DateTime         @default(now())
+  createdById          String?
+  createdBy            User?            @relation("AccountTypeCreatedBy", fields: [createdById], references: [id])
 }
 
 model AccountCategory {
@@ -776,11 +860,11 @@ model AccountCategory {
   parent         AccountCategory?  @relation("AccountCategoryHierarchy", fields: [parentId], references: [id])
   children       AccountCategory[] @relation("AccountCategoryHierarchy")
   level          Int               @default(1)
-
-  accounts GlAccount[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  accounts       GlAccount[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  createdById    String?
+  createdBy      User?             @relation("AccountCategoryCreatedBy", fields: [createdById], references: [id])
 
   @@unique([businessUnitId, code])
 }
@@ -794,78 +878,71 @@ model AccountGroup {
   rangeMin       Int?
   rangeMax       Int?
   description    String?
-
-  accounts GlAccount[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  accounts       GlAccount[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  createdById    String?
+  createdBy      User?        @relation("AccountGroupCreatedBy", fields: [createdById], references: [id])
 }
 
 model GlAccount {
-  id             String       @id @default(uuid())
-  accountCode    String
-  name           String
-  description    String?
-  balance        Decimal      @default(0) @db.Decimal(19, 4)
-  accountTypeId  String
-  accountType    AccountType  @relation(fields: [accountTypeId], references: [id])
-  businessUnitId String
-  businessUnit   BusinessUnit @relation(fields: [businessUnitId], references: [id], onDelete: Cascade)
-
-  parentAccountId   String?
-  parentAccount     GlAccount?        @relation("GlAccountHierarchy", fields: [parentAccountId], references: [id])
-  childAccounts     GlAccount[]       @relation("GlAccountHierarchy")
-  isControlAccount  Boolean           @default(false)
-  currency          String?
-  isActive          Boolean           @default(true)
-  notes             String?
-  normalBalance     NormalBalance?
-  accountCategoryId String?
-  accountCategory   AccountCategory?  @relation(fields: [accountCategoryId], references: [id])
-  accountGroupId    String?
-  accountGroup      AccountGroup?     @relation(fields: [accountGroupId], references: [id])
-  cashFlowCategory  CashFlowCategory?
-
-  createdById String?
-  createdBy   User?   @relation("GlAccountCreatedBy", fields: [createdById], references: [id])
-  updatedById String?
-  updatedBy   User?   @relation("GlAccountUpdatedBy", fields: [updatedById], references: [id])
-
+  id                 String              @id @default(uuid())
+  accountCode        String
+  name               String
+  description        String?
+  balance            Decimal             @default(0) @db.Decimal(19, 4)
+  accountTypeId      String
+  accountType        AccountType         @relation(fields: [accountTypeId], references: [id])
+  businessUnitId     String
+  businessUnit       BusinessUnit        @relation(fields: [businessUnitId], references: [id], onDelete: Cascade)
+  parentAccountId    String?
+  parentAccount      GlAccount?          @relation("GlAccountHierarchy", fields: [parentAccountId], references: [id])
+  childAccounts      GlAccount[]         @relation("GlAccountHierarchy")
+  isControlAccount   Boolean             @default(false)
+  currency           String?
+  isActive           Boolean             @default(true)
+  notes              String?
+  normalBalance      NormalBalance?
+  accountCategoryId  String?
+  accountCategory    AccountCategory?    @relation(fields: [accountCategoryId], references: [id])
+  accountGroupId     String?
+  accountGroup       AccountGroup?       @relation(fields: [accountGroupId], references: [id])
+  cashFlowCategory   CashFlowCategory?
+  createdById        String?
+  createdBy          User?               @relation("GlAccountCreatedBy", fields: [createdById], references: [id])
+  updatedById        String?
+  updatedBy          User?               @relation("GlAccountUpdatedBy", fields: [updatedById], references: [id])
   journalLines       JournalEntryLine[]
   arInvoiceItems     ARInvoiceItem[]
   apInvoiceItems     APInvoiceItem[]
   purchaseOrderItems PurchaseOrderItem[]
   bankAccount        BankAccount?
   budgetLines        BudgetLine[]        @relation("GlAccountToBudgetLines")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   @@unique([businessUnitId, accountCode]) // per-BU uniqueness
 }
 
 model AccountingPeriod {
-  id             String         @id @default(uuid())
-  name           String
-  startDate      DateTime
-  endDate        DateTime
-  status         PeriodStatus   @default(OPEN)
-  businessUnitId String
-  businessUnit   BusinessUnit   @relation(fields: [businessUnitId], references: [id])
-  journalEntries JournalEntry[]
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-
-  fiscalYear   Int
-  periodNumber Int
-  lockedDate   DateTime?
-  type         PeriodType @default(MONTHLY)
-
-  updatedById String?
-  updatedBy   User?   @relation("UpdaterToAPeriod", fields: [updatedById], references: [id])
-  createdById String?
-  createdBy   User?   @relation("CreatorToAPeriod", fields: [createdById], references: [id])
-
+  id              String           @id @default(uuid())
+  name            String
+  startDate       DateTime
+  endDate         DateTime
+  status          PeriodStatus     @default(OPEN)
+  businessUnitId  String
+  businessUnit    BusinessUnit     @relation(fields: [businessUnitId], references: [id])
+  journalEntries  JournalEntry[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  fiscalYear      Int
+  periodNumber    Int
+  lockedDate      DateTime?
+  type            PeriodType       @default(MONTHLY)
+  updatedById     String?
+  updatedBy       User?            @relation("UpdaterToAPeriod", fields: [updatedById], references: [id])
+  createdById     String?
+  createdBy       User?            @relation("CreatorToAPeriod", fields: [createdById], references: [id])
   postingControls PostingControl[]
   budgetLines     BudgetLine[]     @relation("BudgetLineToAccountingPeriod")
 
@@ -884,6 +961,9 @@ model PostingControl {
   isAllowed          Boolean          @default(true)
   isDefault          Boolean          @default(false)
   notes              String?
+  createdAt          DateTime         @default(now())
+  createdById        String?
+  createdBy          User?            @relation("PostingControlCreatedBy", fields: [createdById], references: [id])
 
   @@unique([businessUnitId, accountingPeriodId, accountTypeId, documentType])
 }
@@ -899,70 +979,59 @@ model JournalBatch {
   postedAt       DateTime?
   postedById     String?
   postedBy       User?              @relation("BatchPostedBy", fields: [postedById], references: [id])
-
-  entries JournalEntry[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  entries        JournalEntry[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  createdById    String?
+  createdBy      User?              @relation("JournalBatchCreatedBy", fields: [createdById], references: [id])
 }
 
 model JournalEntry {
-  id     String @id @default(uuid())
-  docNum String @unique
-
-  postingDate  DateTime
-  documentDate DateTime?
-  remarks      String?
-
-  referenceNumber  String?
-  memo             String?
-  currency         String?
-  exchangeRate     Decimal?    @db.Decimal(18, 8)
-  fxRateType       FxRateType?
-  fxRateSource     String?
-  isReversingEntry Boolean     @default(false)
-  reversalDate     DateTime?
-
-  reversedFromEntryId String?
-  reversedFromEntry   JournalEntry?  @relation("JEReversal", fields: [reversedFromEntryId], references: [id])
-  reversalChildren    JournalEntry[] @relation("JEReversal")
-
-  isPosted               Boolean                @default(false)
+  id                     String                    @id @default(uuid())
+  docNum                 String                    @unique
+  postingDate            DateTime
+  documentDate           DateTime?
+  remarks                String?
+  referenceNumber        String?
+  memo                   String?
+  currency               String?
+  exchangeRate           Decimal?                  @db.Decimal(18, 8)
+  fxRateType             FxRateType?
+  fxRateSource           String?
+  isReversingEntry       Boolean                   @default(false)
+  reversalDate           DateTime?
+  reversedFromEntryId    String?
+  reversedFromEntry      JournalEntry?             @relation("JEReversal", fields: [reversedFromEntryId], references: [id])
+  reversalChildren       JournalEntry[]            @relation("JEReversal")
+  isPosted               Boolean                   @default(false)
   postedAt               DateTime?
   postedById             String?
-  postedBy               User?                  @relation("PosterToJE", fields: [postedById], references: [id])
-  locked                 Boolean                @default(false)
-  approvalWorkflowStatus ApprovalWorkflowStatus @default(DRAFT)
+  postedBy               User?                     @relation("PosterToJE", fields: [postedById], references: [id])
+  locked                 Boolean                   @default(false)
+  approvalWorkflowStatus ApprovalWorkflowStatus    @default(DRAFT)
   sourceSystem           String?
-
-  authorId    String
-  author      User    @relation("AuthorToJE", fields: [authorId], references: [id])
-  approverId  String?
-  approver    User?   @relation("ApproverToJE", fields: [approverId], references: [id])
-  updatedById String?
-  updatedBy   User?   @relation("UpdaterToJE", fields: [updatedById], references: [id])
-
-  businessUnitId     String
-  businessUnit       BusinessUnit      @relation(fields: [businessUnitId], references: [id])
-  accountingPeriodId String?
-  accountingPeriod   AccountingPeriod? @relation(fields: [accountingPeriodId], references: [id])
-
-  batchId String?
-  batch   JournalBatch? @relation(fields: [batchId], references: [id])
-
-  lines JournalEntryLine[]
-
-  arInvoice       ARInvoice?
-  apInvoice       APInvoice?
-  incomingPayment IncomingPayment?
-  outgoingPayment OutgoingPayment?
-  depositId       String?
-  deposit         Deposit?         @relation(fields: [depositId], references: [id])
-
-  approvals JournalEntryApprovalLog[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  authorId               String
+  author                 User                      @relation("AuthorToJE", fields: [authorId], references: [id])
+  approverId             String?
+  approver               User?                     @relation("ApproverToJE", fields: [approverId], references: [id])
+  updatedById            String?
+  updatedBy              User?                     @relation("UpdaterToJE", fields: [updatedById], references: [id])
+  businessUnitId         String
+  businessUnit           BusinessUnit              @relation(fields: [businessUnitId], references: [id])
+  accountingPeriodId     String?
+  accountingPeriod       AccountingPeriod?         @relation(fields: [accountingPeriodId], references: [id])
+  batchId                String?
+  batch                  JournalBatch?             @relation(fields: [batchId], references: [id])
+  lines                  JournalEntryLine[]
+  arInvoice              ARInvoice?
+  apInvoice              APInvoice?
+  incomingPayment        IncomingPayment?
+  outgoingPayment        OutgoingPayment?
+  depositId              String?
+  deposit                Deposit?                  @relation(fields: [depositId], references: [id])
+  approvals              JournalEntryApprovalLog[]
+  createdAt              DateTime                  @default(now())
+  updatedAt              DateTime                  @updatedAt
 
   @@index([businessUnitId, postingDate])
   @@index([accountingPeriodId])
@@ -983,40 +1052,34 @@ model JournalEntryApprovalLog {
 }
 
 model JournalEntryLine {
-  id                      String       @id @default(uuid())
-  journalEntryId          String
-  journalEntry            JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
-  glAccountBusinessUnitId String
-  glAccountCode           String
-  glAccount               GlAccount    @relation(fields: [glAccountBusinessUnitId, glAccountCode], references: [businessUnitId, accountCode])
-  debit                   Decimal?     @db.Decimal(19, 4)
-  credit                  Decimal?     @db.Decimal(19, 4)
-
-  functionalDebit  Decimal? @db.Decimal(19, 4)
-  functionalCredit Decimal? @db.Decimal(19, 4)
-
-  description      String?
-  currency         String?
-  exchangeRate     Decimal?              @db.Decimal(18, 8)
-  fxRateType       FxRateType?
-  fxRateSource     String?
-  entityId         String?
-  entityType       AccountingEntityType?
-  cashFlowCategory CashFlowCategory?
-
-  taxes JournalEntryLineTax[]
-
-  dimensions JournalEntryLineDimension[]
-
+  id                        String                      @id @default(uuid())
+  journalEntryId            String
+  journalEntry              JournalEntry                @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  glAccountBusinessUnitId   String
+  glAccountCode             String
+  glAccount                 GlAccount                   @relation(fields: [glAccountBusinessUnitId, glAccountCode], references: [businessUnitId, accountCode])
+  debit                     Decimal?                    @db.Decimal(19, 4)
+  credit                    Decimal?                    @db.Decimal(19, 4)
+  functionalDebit           Decimal?                    @db.Decimal(19, 4)
+  functionalCredit          Decimal?                    @db.Decimal(19, 4)
+  description               String?
+  currency                  String?
+  exchangeRate              Decimal?                    @db.Decimal(18, 8)
+  fxRateType                FxRateType?
+  fxRateSource              String?
+  entityId                  String?
+  entityType                AccountingEntityType?
+  cashFlowCategory          CashFlowCategory?
+  taxes                     JournalEntryLineTax[]
+  dimensions                JournalEntryLineDimension[]
   intercompanyTransactionId String?
-  intercompanyTransaction   IntercompanyTransaction? @relation(fields: [intercompanyTransactionId], references: [id])
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdById String?
-  createdBy   User?    @relation("CreatorToJELine", fields: [createdById], references: [id])
-  updatedById String?
-  updatedBy   User?    @relation("UpdaterToJELine", fields: [updatedById], references: [id])
+  intercompanyTransaction   IntercompanyTransaction?    @relation(fields: [intercompanyTransactionId], references: [id])
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime                    @updatedAt
+  createdById               String?
+  createdBy                 User?                       @relation("CreatorToJELine", fields: [createdById], references: [id])
+  updatedById               String?
+  updatedBy                 User?                       @relation("UpdaterToJELine", fields: [updatedById], references: [id])
 
   @@index([journalEntryId])
   @@index([glAccountBusinessUnitId, glAccountCode])
@@ -1028,34 +1091,34 @@ model JournalEntryLine {
 // -----------------------------
 
 model Dimension {
-  id             String       @id @default(uuid())
+  id             String           @id @default(uuid())
   name           String
   type           String
-  isActive       Boolean      @default(true)
+  isActive       Boolean          @default(true)
   businessUnitId String
-  businessUnit   BusinessUnit @relation(fields: [businessUnitId], references: [id])
-
-  values DimensionValue[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  businessUnit   BusinessUnit     @relation(fields: [businessUnitId], references: [id])
+  values         DimensionValue[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  createdById    String?
+  createdBy      User?            @relation("DimensionCreatedBy", fields: [createdById], references: [id])
 
   @@unique([businessUnitId, name])
 }
 
 model DimensionValue {
-  id          String    @id @default(uuid())
-  dimensionId String
-  dimension   Dimension @relation(fields: [dimensionId], references: [id], onDelete: Cascade)
-  code        String?
-  name        String
-  isActive    Boolean   @default(true)
-
+  id                String                      @id @default(uuid())
+  dimensionId       String
+  dimension         Dimension                   @relation(fields: [dimensionId], references: [id], onDelete: Cascade)
+  code              String?
+  name              String
+  isActive          Boolean                     @default(true)
   journalEntryLines JournalEntryLineDimension[]
   budgetLines       BudgetLine[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt         DateTime                    @default(now())
+  updatedAt         DateTime                    @updatedAt
+  createdById       String?
+  createdBy         User?                       @relation("DimensionValueCreatedBy", fields: [createdById], references: [id])
 
   @@unique([dimensionId, name])
   @@unique([dimensionId, code])
@@ -1075,23 +1138,21 @@ model JournalEntryLineDimension {
 // -----------------------------
 
 model TaxCode {
-  id             String       @id @default(uuid())
-  code           String
-  name           String
-  rate           Decimal      @db.Decimal(9, 6)
-  type           TaxType
-  isActive       Boolean      @default(true)
-  description    String?
-  businessUnitId String
-  businessUnit   BusinessUnit @relation(fields: [businessUnitId], references: [id])
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdById String?
-  createdBy   User?    @relation("TaxCodeCreatedBy", fields: [createdById], references: [id])
-  updatedById String?
-  updatedBy   User?    @relation("TaxCodeUpdatedBy", fields: [updatedById], references: [id])
-
+  id                   String                       @id @default(uuid())
+  code                 String
+  name                 String
+  rate                 Decimal                      @db.Decimal(9, 6)
+  type                 TaxType
+  isActive             Boolean                      @default(true)
+  description          String?
+  businessUnitId       String
+  businessUnit         BusinessUnit                 @relation(fields: [businessUnitId], references: [id])
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+  createdById          String?
+  createdBy            User?                        @relation("TaxCodeCreatedBy", fields: [createdById], references: [id])
+  updatedById          String?
+  updatedBy            User?                        @relation("TaxCodeUpdatedBy", fields: [updatedById], references: [id])
   arInvoiceItemTaxes   ARInvoiceItemTax[]
   apInvoiceItemTaxes   APInvoiceItemTax[]
   journalLineTaxes     JournalEntryLineTax[]
@@ -1109,6 +1170,9 @@ model ARInvoiceItemTax {
   taxCode         TaxCode       @relation(fields: [taxCodeId], references: [id])
   taxBase         Decimal       @db.Decimal(19, 4)
   taxAmount       Decimal       @db.Decimal(19, 4)
+  createdAt       DateTime      @default(now())
+  createdById     String?
+  createdBy       User?         @relation("ARInvoiceItemTaxCreatedBy", fields: [createdById], references: [id])
 }
 
 model APInvoiceItemTax {
@@ -1119,6 +1183,9 @@ model APInvoiceItemTax {
   taxCode         TaxCode       @relation(fields: [taxCodeId], references: [id])
   taxBase         Decimal       @db.Decimal(19, 4)
   taxAmount       Decimal       @db.Decimal(19, 4)
+  createdAt       DateTime      @default(now())
+  createdById     String?
+  createdBy       User?         @relation("APInvoiceItemTaxCreatedBy", fields: [createdById], references: [id])
 }
 
 model JournalEntryLineTax {
@@ -1129,24 +1196,33 @@ model JournalEntryLineTax {
   taxCode            TaxCode          @relation(fields: [taxCodeId], references: [id])
   taxBase            Decimal?         @db.Decimal(19, 4)
   taxAmount          Decimal?         @db.Decimal(19, 4)
+  createdAt          DateTime         @default(now())
+  createdById        String?
+  createdBy          User?            @relation("JournalEntryLineTaxCreatedBy", fields: [createdById], references: [id])
 }
 
 model IncomingPaymentWithholding {
-  id        String          @id @default(uuid())
-  paymentId String
-  payment   IncomingPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  taxCodeId String
-  taxCode   TaxCode         @relation(fields: [taxCodeId], references: [id])
-  amount    Decimal         @db.Decimal(19, 4)
+  id          String          @id @default(uuid())
+  paymentId   String
+  payment     IncomingPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  taxCodeId   String
+  taxCode     TaxCode         @relation(fields: [taxCodeId], references: [id])
+  amount      Decimal         @db.Decimal(19, 4)
+  createdAt   DateTime        @default(now())
+  createdById String?
+  createdBy   User?           @relation("IncomingPaymentWithholdingCreatedBy", fields: [createdById], references: [id])
 }
 
 model OutgoingPaymentWithholding {
-  id        String          @id @default(uuid())
-  paymentId String
-  payment   OutgoingPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  taxCodeId String
-  taxCode   TaxCode         @relation(fields: [taxCodeId], references: [id])
-  amount    Decimal         @db.Decimal(19, 4)
+  id          String          @id @default(uuid())
+  paymentId   String
+  payment     OutgoingPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  taxCodeId   String
+  taxCode     TaxCode         @relation(fields: [taxCodeId], references: [id])
+  amount      Decimal         @db.Decimal(19, 4)
+  createdAt   DateTime        @default(now())
+  createdById String?
+  createdBy   User?           @relation("OutgoingPaymentWithholdingCreatedBy", fields: [createdById], references: [id])
 }
 
 // -----------------------------
@@ -1161,6 +1237,9 @@ model ARPaymentApplication {
   incomingPayment   IncomingPayment @relation(fields: [incomingPaymentId], references: [id], onDelete: Cascade)
   amountApplied     Decimal         @db.Decimal(19, 4)
   appliedAt         DateTime        @default(now())
+  createdAt         DateTime        @default(now())
+  createdById       String?
+  createdBy         User?           @relation("ARPaymentApplicationCreatedBy", fields: [createdById], references: [id])
 
   @@unique([invoiceId, incomingPaymentId])
   @@index([invoiceId])
@@ -1175,6 +1254,9 @@ model APPaymentApplication {
   outgoingPayment   OutgoingPayment @relation(fields: [outgoingPaymentId], references: [id], onDelete: Cascade)
   amountApplied     Decimal         @db.Decimal(19, 4)
   appliedAt         DateTime        @default(now())
+  createdAt         DateTime        @default(now())
+  createdById       String?
+  createdBy         User?           @relation("APPaymentApplicationCreatedBy", fields: [createdById], references: [id])
 
   @@unique([apInvoiceId, outgoingPaymentId])
   @@index([apInvoiceId])
@@ -1186,15 +1268,16 @@ model APPaymentApplication {
 // -----------------------------
 
 model IntercompanyTransaction {
-  id                 String       @id @default(uuid())
+  id                 String             @id @default(uuid())
   fromBusinessUnitId String
-  fromBusinessUnit   BusinessUnit @relation("ICFromBU", fields: [fromBusinessUnitId], references: [id])
+  fromBusinessUnit   BusinessUnit       @relation("ICFromBU", fields: [fromBusinessUnitId], references: [id])
   toBusinessUnitId   String
-  toBusinessUnit     BusinessUnit @relation("ICToBU", fields: [toBusinessUnitId], references: [id])
+  toBusinessUnit     BusinessUnit       @relation("ICToBU", fields: [toBusinessUnitId], references: [id])
   description        String?
-  createdAt          DateTime     @default(now())
-
-  journalLines JournalEntryLine[]
+  createdAt          DateTime           @default(now())
+  journalLines       JournalEntryLine[]
+  createdById        String?
+  createdBy          User?              @relation("IntercompanyTransactionCreatedBy", fields: [createdById], references: [id])
 }
 
 // -----------------------------
@@ -1210,6 +1293,9 @@ model InventoryLocation {
   requisitionsFrom StockRequisition[] @relation("FromRequisitions")
   requisitionsTo   StockRequisition[] @relation("ToRequisitions")
   receivingItems   ReceivingItem[] // Add this relation back
+  createdAt        DateTime           @default(now())
+  createdById      String?
+  createdBy        User?              @relation("InventoryLocationCreatedBy", fields: [createdById], references: [id])
 }
 
 model InventoryItem {
@@ -1229,6 +1315,8 @@ model InventoryItem {
   stockRequisitions StockRequisitionItem[]
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
+  createdById       String?
+  createdBy         User?                  @relation("InventoryItemCreatedBy", fields: [createdById], references: [id])
 }
 
 model InventoryStock {
@@ -1241,6 +1329,9 @@ model InventoryStock {
   reorderPoint    Decimal             @default(0) @db.Decimal(19, 6)
   updatedAt       DateTime            @updatedAt
   movements       InventoryMovement[]
+  createdAt       DateTime            @default(now())
+  createdById     String?
+  createdBy       User?               @relation("InventoryStockCreatedBy", fields: [createdById], references: [id])
 
   @@unique([inventoryItemId, locationId])
 }
@@ -1259,6 +1350,8 @@ model InventoryMovement {
   receivingItemId    String?
   receivingItem      ReceivingItem?    @relation(fields: [receivingItemId], references: [id])
   createdAt          DateTime          @default(now())
+  createdById        String?
+  createdBy          User?             @relation("InventoryMovementCreatedBy", fields: [createdById], references: [id])
 }
 
 model StockRequisition {
@@ -1288,6 +1381,9 @@ model StockRequisitionItem {
   inventoryItem      InventoryItem    @relation(fields: [inventoryItemId], references: [id])
   requestedQuantity  Decimal          @db.Decimal(19, 6)
   fulfilledQuantity  Decimal?         @db.Decimal(19, 6)
+  createdAt          DateTime         @default(now())
+  createdById        String?
+  createdBy          User?            @relation("StockRequisitionItemCreatedBy", fields: [createdById], references: [id])
 }
 
 model MenuItem {
@@ -1310,6 +1406,8 @@ model MenuItem {
   category            MenuCategory         @relation(fields: [categoryId], references: [id])
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
+  createdById         String?
+  createdBy           User?                @relation("MenuItemCreatedBy", fields: [createdById], references: [id])
 }
 
 model MenuCategory {
@@ -1325,6 +1423,8 @@ model MenuCategory {
   menuItems      MenuItem[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  createdById    String?
+  createdBy      User?        @relation("MenuCategoryCreatedBy", fields: [createdById], references: [id])
 }
 
 model ModifierGroup {
@@ -1338,6 +1438,8 @@ model ModifierGroup {
   modifiers      Modifier[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  createdById    String?
+  createdBy      User?        @relation("ModifierGroupCreatedBy", fields: [createdById], references: [id])
 }
 
 model Modifier {
@@ -1352,6 +1454,8 @@ model Modifier {
   orderItems      OrderItem[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+  createdById     String?
+  createdBy       User?          @relation("ModifierCreatedBy", fields: [createdById], references: [id])
 }
 
 model Recipe {
@@ -1359,6 +1463,9 @@ model Recipe {
   menuItemId  String       @unique
   menuItem    MenuItem     @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   recipeItems RecipeItem[]
+  createdAt   DateTime     @default(now())
+  createdById String?
+  createdBy   User?        @relation("RecipeCreatedBy", fields: [createdById], references: [id])
 }
 
 model RecipeItem {
@@ -1368,6 +1475,9 @@ model RecipeItem {
   inventoryItemId String
   inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
   quantityUsed    Decimal       @db.Decimal(19, 6)
+  createdAt       DateTime      @default(now())
+  createdById     String?
+  createdBy       User?         @relation("RecipeItemCreatedBy", fields: [createdById], references: [id])
 }
 
 model UoM {
@@ -1378,6 +1488,8 @@ model UoM {
   inventoryItems       InventoryItem[]
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
+  createdById          String?
+  createdBy            User?                 @relation("UoMCreatedBy", fields: [createdById], references: [id])
 }
 
 // -----------------------------
@@ -1391,6 +1503,9 @@ model PosTerminal {
   businessUnit   BusinessUnit @relation(fields: [businessUnitId], references: [id])
   orders         Order[]
   shifts         Shift[]
+  createdAt      DateTime     @default(now())
+  createdById    String?
+  createdBy      User?        @relation("PosTerminalCreatedBy", fields: [createdById], references: [id])
 }
 
 model Table {
@@ -1401,6 +1516,9 @@ model Table {
   status         TableStatus   @default(AVAILABLE)
   orders         Order[]
   reservations   Reservation[]
+  createdAt      DateTime      @default(now())
+  createdById    String?
+  createdBy      User?         @relation("TableCreatedBy", fields: [createdById], references: [id])
 }
 
 model Reservation {
@@ -1415,6 +1533,9 @@ model Reservation {
   partySize         Int
   status            String
   notes             String?
+  createdAt         DateTime        @default(now())
+  createdById       String?
+  createdBy         User?           @relation("ReservationCreatedBy", fields: [createdById], references: [id])
 }
 
 model Shift {
@@ -1431,6 +1552,9 @@ model Shift {
   endingCash     Decimal?     @db.Decimal(19, 4)
   payments       Payment[]
   orders         Order[]
+  createdAt      DateTime     @default(now())
+  createdById    String?
+  createdBy      User?        @relation("ShiftCreatedBy", fields: [createdById], references: [id])
 }
 
 model Order {
@@ -1468,14 +1592,6 @@ model Order {
   updatedAt               DateTime            @updatedAt
 }
 
-enum OrderStatus {
-  PREPARING
-  SERVED
-  PAID
-  CANCELLED
-  OPEN
-}
-
 model OrderItem {
   id             String     @id @default(uuid())
   orderId        String
@@ -1494,6 +1610,8 @@ model OrderItem {
   modifiers      Modifier[]
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
+  createdById    String?
+  createdBy      User?      @relation("OrderItemCreatedBy", fields: [createdById], references: [id])
 }
 
 model Payment {
@@ -1507,13 +1625,19 @@ model Payment {
   processedByUser   User          @relation(fields: [processedByUserId], references: [id])
   shiftId           String
   shift             Shift         @relation(fields: [shiftId], references: [id])
+  createdAt         DateTime      @default(now())
+  createdById       String?
+  createdBy         User?         @relation("PaymentCreatedBy", fields: [createdById], references: [id])
 }
 
 model PaymentMethod {
-  id       String    @id @default(uuid())
-  name     String
-  isActive Boolean   @default(true)
-  payments Payment[]
+  id          String    @id @default(uuid())
+  name        String
+  isActive    Boolean   @default(true)
+  payments    Payment[]
+  createdAt   DateTime  @default(now())
+  createdById String?
+  createdBy   User?     @relation("PaymentMethodCreatedBy", fields: [createdById], references: [id])
 }
 
 model Discount {
@@ -1525,6 +1649,9 @@ model Discount {
   businessUnitId String
   businessUnit   BusinessUnit @relation(fields: [businessUnitId], references: [id])
   orders         Order[]
+  createdAt      DateTime     @default(now())
+  createdById    String?
+  createdBy      User?        @relation("DiscountCreatedBy", fields: [createdById], references: [id])
 }
 
 // -----------------------------
@@ -1538,6 +1665,9 @@ model FinancialReport {
   name           String
   generatedAt    DateTime              @default(now())
   lines          FinancialReportLine[]
+  createdAt      DateTime              @default(now())
+  createdById    String?
+  createdBy      User?                 @relation("FinancialReportCreatedBy", fields: [createdById], references: [id])
 }
 
 model FinancialReportLine {
@@ -1547,6 +1677,9 @@ model FinancialReportLine {
   label             String
   value             Decimal         @db.Decimal(19, 4)
   order             Int
+  createdAt         DateTime        @default(now())
+  createdById       String?
+  createdBy         User?           @relation("FinancialReportLineCreatedBy", fields: [createdById], references: [id])
 }
 
 // Budgets
@@ -1559,27 +1692,27 @@ model Budget {
   currency       String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
-
-  lines BudgetLine[]
+  lines          BudgetLine[]
+  createdById    String?
+  createdBy      User?        @relation("BudgetCreatedBy", fields: [createdById], references: [id])
 
   @@unique([businessUnitId, name, fiscalYear])
 }
 
 model BudgetLine {
-  id       String @id @default(uuid())
-  budgetId String
-  budget   Budget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
-
-  glAccountId String
-  glAccount   GlAccount @relation("GlAccountToBudgetLines", fields: [glAccountId], references: [id])
-
-  dimensionValueId String?
-  dimensionValue   DimensionValue? @relation(fields: [dimensionValueId], references: [id])
-
+  id                 String            @id @default(uuid())
+  budgetId           String
+  budget             Budget            @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  glAccountId        String
+  glAccount          GlAccount         @relation("GlAccountToBudgetLines", fields: [glAccountId], references: [id])
+  dimensionValueId   String?
+  dimensionValue     DimensionValue?   @relation(fields: [dimensionValueId], references: [id])
   accountingPeriodId String?
   accountingPeriod   AccountingPeriod? @relation("BudgetLineToAccountingPeriod", fields: [accountingPeriodId], references: [id])
-
-  amount Decimal @db.Decimal(19, 4)
+  amount             Decimal           @db.Decimal(19, 4)
+  createdAt          DateTime          @default(now())
+  createdById        String?
+  createdBy          User?             @relation("BudgetLineCreatedBy", fields: [createdById], references: [id])
 
   @@unique([budgetId, glAccountId, dimensionValueId, accountingPeriodId])
   @@index([glAccountId])
@@ -1592,16 +1725,15 @@ model BudgetLine {
 // -----------------------------
 
 model Attachment {
-  id           String   @id @default(uuid())
+  id           String           @id @default(uuid())
   url          String
   fileName     String
   mimeType     String
   sizeBytes    Int
   uploadedById String
-  uploadedBy   User     @relation("AttachmentUploader", fields: [uploadedById], references: [id])
-  uploadedAt   DateTime @default(now())
-
-  links AttachmentLink[]
+  uploadedBy   User             @relation("AttachmentUploader", fields: [uploadedById], references: [id])
+  uploadedAt   DateTime         @default(now())
+  links        AttachmentLink[]
 }
 
 model AttachmentLink {
@@ -1611,6 +1743,9 @@ model AttachmentLink {
   entityType   AttachmentEntityType
   entityId     String
   notes        String?
+  createdAt    DateTime             @default(now())
+  createdById  String?
+  createdBy    User?                @relation("AttachmentLinkCreatedBy", fields: [createdById], references: [id])
 
   @@index([entityType, entityId])
 }
