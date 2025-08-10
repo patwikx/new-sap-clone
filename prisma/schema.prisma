@@ -570,18 +570,19 @@ model PurchaseOrder {
 }
 
 model PurchaseOrderItem {
-  id              String         @id @default(uuid())
+  id              String          @id @default(uuid())
   docId           String
-  document        PurchaseOrder  @relation(fields: [docId], references: [id], onDelete: Cascade)
+  document        PurchaseOrder   @relation(fields: [docId], references: [id], onDelete: Cascade)
   description     String
   inventoryItemId String?
-  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+  inventoryItem   InventoryItem?  @relation(fields: [inventoryItemId], references: [id])
   glAccountId     String?
-  glAccount       GlAccount?     @relation(fields: [glAccountId], references: [id])
-  quantity        Decimal        @db.Decimal(19, 6)
-  unitPrice       Decimal        @db.Decimal(19, 4)
-  lineTotal       Decimal        @db.Decimal(19, 4)
-  openQuantity    Decimal        @db.Decimal(19, 6)
+  glAccount       GlAccount?      @relation(fields: [glAccountId], references: [id])
+  quantity        Decimal         @db.Decimal(19, 6)
+  unitPrice       Decimal         @db.Decimal(19, 4)
+  lineTotal       Decimal         @db.Decimal(19, 4)
+  openQuantity    Decimal         @db.Decimal(19, 6)
+  receivingItems  ReceivingItem[] // Add this relation back
 }
 
 model Receiving {
@@ -597,6 +598,7 @@ model Receiving {
   postingDate  DateTime
   documentDate DateTime
   remarks      String?
+  deliveryNote String?
 
   items ReceivingItem[]
 
@@ -613,6 +615,14 @@ model ReceivingItem {
   quantity           Decimal             @db.Decimal(19, 6)
   expiryDate         DateTime?
   inventoryMovements InventoryMovement[] // 1:n to movements
+
+  // --- ADD THESE LINES ---
+  purchaseOrderItemId String? // Optional foreign key
+  purchaseOrderItem   PurchaseOrderItem? @relation(fields: [purchaseOrderItemId], references: [id])
+  locationId          String? // Optional foreign key
+  location            InventoryLocation? @relation(fields: [locationId], references: [id])
+  batchNumber         String?
+  notes               String?
 }
 
 model APInvoice {
@@ -1199,6 +1209,7 @@ model InventoryLocation {
   stockLevels      InventoryStock[]
   requisitionsFrom StockRequisition[] @relation("FromRequisitions")
   requisitionsTo   StockRequisition[] @relation("ToRequisitions")
+  receivingItems   ReceivingItem[] // Add this relation back
 }
 
 model InventoryItem {

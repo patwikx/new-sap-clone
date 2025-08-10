@@ -6,7 +6,7 @@ import { LockKeyhole } from "lucide-react"
 
 export default function NotAuthorizedPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-950">
+    <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <Card className="mx-auto w-full max-w-md text-center">
         <CardHeader>
           <LockKeyhole className="mx-auto h-12 w-12 text-destructive" />
