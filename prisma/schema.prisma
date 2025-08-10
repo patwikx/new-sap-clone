@@ -437,6 +437,7 @@ model SalesQuotation {
   postingDate     DateTime
   validUntil      DateTime
   documentDate    DateTime
+  discount        Decimal?
   remarks         String?
   totalAmount     Decimal?             @db.Decimal(19, 4)
   status          DocumentStatus       @default(OPEN)
@@ -796,6 +797,10 @@ model IncomingPayment {
   applications    ARPaymentApplication[]
   withholdings    IncomingPaymentWithholding[]
   createdAt       DateTime                     @default(now())
+  paymentMethodId String?
+  paymentMethod   PaymentMethod?               @relation(fields: [paymentMethodId], references: [id])
+  referenceNumber String?
+  remarks         String?
   createdById     String?
   createdBy       User?                        @relation("IncomingPaymentCreatedBy", fields: [createdById], references: [id])
 }
@@ -1654,13 +1659,14 @@ model Payment {
 }
 
 model PaymentMethod {
-  id          String    @id @default(uuid())
-  name        String
-  isActive    Boolean   @default(true)
-  payments    Payment[]
-  createdAt   DateTime  @default(now())
-  createdById String?
-  createdBy   User?     @relation("PaymentMethodCreatedBy", fields: [createdById], references: [id])
+  id               String            @id @default(uuid())
+  name             String
+  isActive         Boolean           @default(true)
+  payments         Payment[]
+  createdAt        DateTime          @default(now())
+  createdById      String?
+  createdBy        User?             @relation("PaymentMethodCreatedBy", fields: [createdById], references: [id])
+  incomingPayments IncomingPayment[]
 }
 
 model Discount {

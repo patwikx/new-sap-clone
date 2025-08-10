@@ -22,41 +22,19 @@ export async function GET(req: NextRequest) {
       return new NextResponse("Forbidden", { status: 403 })
     }
 
-    const url = new URL(req.url)
-    const typeFilter = url.searchParams.get("type")
-
-    const whereClause: Prisma.GlAccountWhereInput = {
+    const whereClause: Prisma.TaxCodeWhereInput = {
       businessUnitId: businessUnitId,
       isActive: true,
     }
 
-    // Filter by account type if specified
-    if (typeFilter) {
-      whereClause.accountType = {
-        name: typeFilter,
-      }
-    }
-
-    const glAccounts = await prisma.glAccount.findMany({
+    const taxCodes = await prisma.taxCode.findMany({
       where: whereClause,
-      include: {
-        accountType: {
-          select: {
-            name: true,
-          },
-        },
-        accountCategory: {
-          select: {
-            name: true,
-          },
-        },
-      },
-      orderBy: [{ accountCode: "asc" }],
+      orderBy: [{ code: "asc" }],
     })
 
-    return NextResponse.json(glAccounts)
+    return NextResponse.json(taxCodes)
   } catch (error) {
-    console.error("[GL_ACCOUNTS_GET]", error)
+    console.error("[TAX_CODES_GET]", error)
     return new NextResponse("Internal error", { status: 500 })
   }
 }

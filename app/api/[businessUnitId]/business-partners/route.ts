@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import type { Prisma } from "@prisma/client"
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,29 +11,34 @@ export async function GET(req: NextRequest) {
     }
 
     const businessUnitId = req.headers.get("x-business-unit-id")
-
     if (!businessUnitId) {
       return new NextResponse("Missing x-business-unit-id header", {
         status: 400,
       })
     }
 
-    // Check if user has access to this business unit
-    const hasAccess = session.user.assignments.some(
-      (assignment) => assignment.businessUnitId === businessUnitId
-    )
-
+    const hasAccess = session.user.assignments.some((assignment) => assignment.businessUnitId === businessUnitId)
     if (!hasAccess) {
       return new NextResponse("Forbidden", { status: 403 })
     }
 
+    const url = new URL(req.url)
+    const typeFilter = url.searchParams.get("type")
+
+    const whereClause: Prisma.BusinessPartnerWhereInput = {
+      businessUnitId: businessUnitId,
+    }
+
+    // Filter by business partner type if specified
+    if (typeFilter && ["CUSTOMER", "VENDOR", "LEAD"].includes(typeFilter)) {
+      whereClause.type = typeFilter as "CUSTOMER" | "VENDOR" | "LEAD"
+    }
+
     const businessPartners = await prisma.businessPartner.findMany({
-      where: {
-        businessUnitId: businessUnitId
-      },
+      where: whereClause,
       orderBy: {
-        name: 'asc'
-      }
+        name: "asc",
+      },
     })
 
     return NextResponse.json(businessPartners)
@@ -50,7 +56,6 @@ export async function POST(req: NextRequest) {
     }
 
     const businessUnitId = req.headers.get("x-business-unit-id")
-
     if (!businessUnitId) {
       return new NextResponse("Missing x-business-unit-id header", {
         status: 400,
@@ -59,11 +64,8 @@ export async function POST(req: NextRequest) {
 
     // Check if user has admin access to this business unit
     const hasAdminAccess = session.user.assignments.some(
-      (assignment) => 
-        assignment.businessUnitId === businessUnitId && 
-        assignment.role.role === 'Admin'
+      (assignment) => assignment.businessUnitId === businessUnitId && assignment.role.role === "Admin",
     )
-
     if (!hasAdminAccess) {
       return new NextResponse("Forbidden", { status: 403 })
     }
@@ -79,8 +81,8 @@ export async function POST(req: NextRequest) {
     const existingPartner = await prisma.businessPartner.findFirst({
       where: {
         bpCode,
-        businessUnitId
-      }
+        businessUnitId,
+      },
     })
 
     if (existingPartner) {
@@ -99,8 +101,8 @@ export async function POST(req: NextRequest) {
         contactPerson,
         paymentTerms,
         creditLimit,
-        businessUnitId
-      }
+        businessUnitId,
+      },
     })
 
     return NextResponse.json(businessPartner, { status: 201 })

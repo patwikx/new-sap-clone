@@ -22,41 +22,26 @@ export async function GET(req: NextRequest) {
       return new NextResponse("Forbidden", { status: 403 })
     }
 
-    const url = new URL(req.url)
-    const typeFilter = url.searchParams.get("type")
-
-    const whereClause: Prisma.GlAccountWhereInput = {
+    const whereClause: Prisma.MenuItemWhereInput = {
       businessUnitId: businessUnitId,
       isActive: true,
     }
 
-    // Filter by account type if specified
-    if (typeFilter) {
-      whereClause.accountType = {
-        name: typeFilter,
-      }
-    }
-
-    const glAccounts = await prisma.glAccount.findMany({
+    const menuItems = await prisma.menuItem.findMany({
       where: whereClause,
       include: {
-        accountType: {
-          select: {
-            name: true,
-          },
-        },
-        accountCategory: {
+        category: {
           select: {
             name: true,
           },
         },
       },
-      orderBy: [{ accountCode: "asc" }],
+      orderBy: [{ category: { name: "asc" } }, { name: "asc" }],
     })
 
-    return NextResponse.json(glAccounts)
+    return NextResponse.json(menuItems)
   } catch (error) {
-    console.error("[GL_ACCOUNTS_GET]", error)
+    console.error("[MENU_ITEMS_GET]", error)
     return new NextResponse("Internal error", { status: 500 })
   }
 }
