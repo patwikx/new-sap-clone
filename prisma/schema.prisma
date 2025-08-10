@@ -331,6 +331,7 @@ model BusinessUnit {
   postingControls    PostingControl[]
   journalBatches     JournalBatch[]
   budgets            Budget[]
+  inventroyCategory  InventoryCategory[]
 
   // Documents
   salesQuotations  SalesQuotation[]
@@ -1287,6 +1288,10 @@ model IntercompanyTransaction {
 model InventoryLocation {
   id               String             @id @default(uuid())
   name             String
+  description      String?
+  address          String?
+  contactPerson    String?
+  phone            String?
   businessUnitId   String
   businessUnit     BusinessUnit       @relation(fields: [businessUnitId], references: [id])
   stockLevels      InventoryStock[]
@@ -1300,8 +1305,10 @@ model InventoryLocation {
 
 model InventoryItem {
   id                String                 @id @default(uuid())
+  itemCode          String?                @unique
   name              String
   description       String?
+  standardCost      String?
   isActive          Boolean                @default(true)
   businessUnitId    String
   businessUnit      BusinessUnit           @relation(fields: [businessUnitId], references: [id])
@@ -1315,8 +1322,11 @@ model InventoryItem {
   stockRequisitions StockRequisitionItem[]
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
-  createdById       String?
-  createdBy         User?                  @relation("InventoryItemCreatedBy", fields: [createdById], references: [id])
+
+  inventoryCategoryId String?
+  inventoryCategory   InventoryCategory? @relation(fields: [inventoryCategoryId], references: [id])
+  createdById         String?
+  createdBy           User?              @relation("InventoryItemCreatedBy", fields: [createdById], references: [id])
 }
 
 model InventoryStock {
@@ -1334,6 +1344,16 @@ model InventoryStock {
   createdBy       User?               @relation("InventoryStockCreatedBy", fields: [createdById], references: [id])
 
   @@unique([inventoryItemId, locationId])
+}
+
+model InventoryCategory {
+  id             String          @id @default(uuid())
+  name           String
+  businessUnitId String
+  businessUnit   BusinessUnit    @relation(fields: [businessUnitId], references: [id])
+  inventoryItems InventoryItem[]
+
+  @@unique([businessUnitId, name])
 }
 
 model InventoryMovement {
@@ -1357,6 +1377,9 @@ model InventoryMovement {
 model StockRequisition {
   id                String                 @id @default(uuid())
   requisitionNumber String                 @unique
+  requestDate       DateTime?
+  requiredDate      DateTime?
+  purpose           String?
   fromLocationId    String
   fromLocation      InventoryLocation      @relation("FromRequisitions", fields: [fromLocationId], references: [id])
   toLocationId      String

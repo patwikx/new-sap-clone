@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    // Check if user has access to this business unit
     const hasAccess = session.user.assignments.some(
       (assignment) => assignment.businessUnitId === businessUnitId
     )
@@ -29,13 +28,22 @@ export async function GET(req: NextRequest) {
     const inventoryItems = await prisma.inventoryItem.findMany({
       where: {
         businessUnitId: businessUnitId,
-        isActive: true
       },
       include: {
         uom: {
           select: {
             name: true,
             symbol: true
+          }
+        },
+        // Include the stock levels and their locations
+        stockLevels: {
+          include: {
+            location: {
+              select: {
+                name: true
+              }
+            }
           }
         }
       },
@@ -44,7 +52,16 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    return NextResponse.json(inventoryItems)
+    // Map the result to match the client-side interface (stockLevels -> stocks)
+    const itemsWithStocks = inventoryItems.map(item => {
+        const { stockLevels, ...rest } = item;
+        return {
+            ...rest,
+            stocks: stockLevels
+        }
+    })
+
+    return NextResponse.json(itemsWithStocks)
   } catch (error) {
     console.error("[INVENTORY_ITEMS_GET]", error)
     return new NextResponse("Internal error", { status: 500 })
