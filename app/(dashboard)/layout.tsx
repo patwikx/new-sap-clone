@@ -1,17 +1,22 @@
-import type React from "react"
-import { redirect } from "next/navigation"
-import { auth } from "@/auth"
-import { headers } from "next/headers"
-import { Sidebar } from "@/components/sidebar"
-import { Toaster } from "@/components/ui/sonner"
-import type { BusinessUnitItem } from "@/types/business-unit-types"
-import { prisma } from "@/lib/prisma"
+import { redirect } from 'next/navigation'
+import { auth } from '@/auth'
+import { headers } from 'next/headers'
+import { Sidebar } from '@/components/sidebar'
+import { Toaster } from '@/components/ui/sonner'
+import type { BusinessUnitItem } from '@/types/business-unit-types'
+import { prisma } from '@/lib/prisma'
 import "../globals.css" // Import globals.css at the top of the file
 import { Header } from "@/components/header"
 
 export const metadata = {
   title: "PLM Acctg Solutions, Inc.",
   description: "Point of Sale System for TWC",
+}
+
+// Define a more specific type for the business unit from the session
+type SessionBusinessUnit = {
+  id: string;
+  name: string | { name: string }; // The name can be a string or a nested object
 }
 
 export default async function DashboardLayout({
@@ -29,16 +34,10 @@ export default async function DashboardLayout({
   }
 
   // --- START: Force re-fetch user assignments if session seems stale ---
-  // This is a defensive check to ensure the session assignments are up-to-date
-  // especially after client-side navigations that change the businessUnitId.
   const currentBusinessUnitIdInSession = session.user.assignments.some(
     (assignment) => assignment.businessUnitId === businessUnitId,
   )
 
-  // If the requested businessUnitId is not in the current session's assignments,
-  // it means the session might be stale. Re-fetch user details from DB.
-  // This also handles the case where businessUnitId is initially null/undefined
-  // but the user is logged in and needs to be redirected to a default unit.
   if (session.user.id && businessUnitId && !currentBusinessUnitIdInSession) {
     const freshUser = await prisma.user.findUnique({
       where: { id: session.user.id },
@@ -49,13 +48,11 @@ export default async function DashboardLayout({
     })
 
     if (freshUser) {
-      // Update the session object with fresh assignments
       session.user.assignments = freshUser.assignments.map((a) => ({
         businessUnitId: a.businessUnitId,
         businessUnit: { id: a.businessUnit.id, name: a.businessUnit.name },
         role: { id: a.role.id, role: a.role.role },
       }))
-      // Also update the main role if it's derived from assignments
       if (freshUser.role) {
         session.user.role = freshUser.role
       } else if (freshUser.assignments.length > 0) {
@@ -65,16 +62,13 @@ export default async function DashboardLayout({
   }
   // --- END: Force re-fetch user assignments if session seems stale ---
 
-  // Handle case where businessUnitId is missing from the URL/header
   if (!businessUnitId) {
     const defaultUnitId = session.user.assignments[0]?.businessUnitId
-    // Redirect to the user's first assigned unit, or to a selection page
     redirect(defaultUnitId ? `/${defaultUnitId}` : "/select-unit")
-    return null // Stop rendering since we are redirecting
+    return null
   }
 
   let businessUnits: BusinessUnitItem[] = []
-  // Check if the user is authorized for this specific business unit
   const isAdmin = session.user.assignments.some((assignment) => assignment.role.role === "Admin")
   const isAuthorizedForUnit = session.user.assignments.some(
     (assignment) => assignment.businessUnitId === businessUnitId,
@@ -89,32 +83,32 @@ export default async function DashboardLayout({
       },
     })
   } else {
-    businessUnits = session.user.assignments.map((assignment) => assignment.businessUnit)
+    businessUnits = session.user.assignments.map((assignment) => {
+      const bu = assignment.businessUnit as SessionBusinessUnit;
+      return {
+        id: bu.id,
+        name: typeof bu.name === 'object' && bu.name !== null ? bu.name.name : bu.name,
+      };
+    });
   }
 
-  // If not an admin and not authorized for this unit, redirect them
   if (!isAdmin && !isAuthorizedForUnit) {
     const defaultUnitId = session.user.assignments[0]?.businessUnitId
     redirect(defaultUnitId ? `/${defaultUnitId}` : "/select-unit")
-    return null // Stop rendering
+    return null
   }
 
-return (
+  return (
     <>
       <div className="flex h-screen">
         <div className="hidden md:flex md:w-64 md:flex-col md:flex-shrink-0 md:border-r">
-          {/* Pass the validated businessUnitId as a prop to the Sidebar */}
           <Sidebar businessUnitId={businessUnitId} businessUnits={businessUnits} />
         </div>
 
-        {/* Main Content Area - This should be a flex column */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header at the top */}
-          <Header
-            businessUnitName={businessUnits.find((bu) => bu.id === businessUnitId)?.name}
-          />
+          {/* FIX: Removed the businessUnitName prop from the Header */}
+          <Header />
 
-          {/* Main content below header */}
           <main className="flex-1 p-6 overflow-y-auto">
             {children}
             <Toaster />
