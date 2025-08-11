@@ -60,7 +60,7 @@ export default async function DashboardLayout({
       }
     }
   }
-  // --- END: Force re-fetch user assignments if session seems stale ---
+  // Force re-fetch user assignments if session is old
 
   if (!businessUnitId) {
     const defaultUnitId = session.user.assignments[0]?.businessUnitId

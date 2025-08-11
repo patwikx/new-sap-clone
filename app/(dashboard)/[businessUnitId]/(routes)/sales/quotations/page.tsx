@@ -13,10 +13,12 @@ import {
   XCircle,
   Eye,
   ShoppingCart,
+  User,
+  Calendar,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
@@ -50,7 +52,7 @@ interface SalesQuotation {
   }
   items: {
     id: string
-    menuItemId: string // Add this field
+    menuItemId: string
     quantity: number
     unitPrice: number
     description: string
@@ -262,7 +264,7 @@ const SalesQuotationsPage = () => {
       {/* Filters and Search */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle className="text-lg">Filters & Search</CardTitle>
           <CardDescription>Filter and search sales quotations by various criteria</CardDescription>
         </CardHeader>
         <CardContent>
@@ -279,7 +281,7 @@ const SalesQuotationsPage = () => {
               </div>
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -291,7 +293,7 @@ const SalesQuotationsPage = () => {
               </SelectContent>
             </Select>
             <Select value={dateFilter} onValueChange={setDateFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Filter by date" />
               </SelectTrigger>
               <SelectContent>
@@ -305,103 +307,81 @@ const SalesQuotationsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Quotations List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Sales Quotations ({filteredQuotations.length})</CardTitle>
-          <CardDescription>Manage your sales quotations and track customer responses</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredQuotations.map((quotation) => (
-              <div
-                key={quotation.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
-                    <FileText className="h-5 w-5 text-primary" />
+      {/* Quotations Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredQuotations.length > 0 ? (
+          filteredQuotations.map((quotation) => (
+            <Card key={quotation.id} className="flex flex-col">
+              <CardHeader>
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <CardTitle className="text-base">{quotation.docNum}</CardTitle>
+                    <CardDescription className="pt-1">{quotation.businessPartner.name}</CardDescription>
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{quotation.docNum}</p>
-                      {getStatusBadge(quotation.status)}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Customer: {quotation.businessPartner.name} | Owner: {quotation.owner.name} | Valid Until:{" "}
-                      {new Date(quotation.validUntil).toLocaleDateString()}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>Amount: ₱{quotation.totalAmount.toLocaleString()}</span>
-                      <span>Items: {quotation.items.length}</span>
-                      <span>Created: {new Date(quotation.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => router.push(`/${businessUnitId}/sales/quotations/${quotation.id}`)}
-                      className="gap-2"
-                    >
-                      <Eye className="h-4 w-4" />
-                      View Details
-                    </DropdownMenuItem>
-                    {quotation.status === "OPEN" && (
-                      <>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedQuotation(quotation)
-                            setEditQuotationOpen(true)
-                          }}
-                          className="gap-2"
-                        >
-                          <Edit className="h-4 w-4" />
-                          Edit Quotation
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleConvertToOrder(quotation)} className="gap-2">
-                          <ShoppingCart className="h-4 w-4" />
-                          Convert to Order
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    <DropdownMenuSeparator />
-                    {quotation.status !== "ACCEPTED" && (
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setSelectedQuotation(quotation)
-                          setDeleteQuotationOpen(true)
-                        }}
-                        className="gap-2 text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete Quotation
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => router.push(`/${businessUnitId}/sales/quotations/${quotation.id}`)} className="gap-2">
+                        <Eye className="h-4 w-4" /> View Details
                       </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ))}
-            {filteredQuotations.length === 0 && (
-              <div className="text-center py-12">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No sales quotations found</h3>
-                <p className="text-muted-foreground">
-                  {searchTerm || statusFilter !== "all" || dateFilter !== "all"
-                    ? "Try adjusting your filters"
-                    : "Get started by creating your first sales quotation"}
-                </p>
-              </div>
-            )}
+                      {quotation.status === "OPEN" && (
+                        <>
+                          <DropdownMenuItem onClick={() => { setSelectedQuotation(quotation); setEditQuotationOpen(true); }} className="gap-2">
+                            <Edit className="h-4 w-4" /> Edit Quotation
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleConvertToOrder(quotation)} className="gap-2">
+                            <ShoppingCart className="h-4 w-4" /> Convert to Order
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      <DropdownMenuSeparator />
+                      {quotation.status !== "ACCEPTED" && (
+                        <DropdownMenuItem onClick={() => { setSelectedQuotation(quotation); setDeleteQuotationOpen(true); }} className="gap-2 text-destructive focus:text-destructive">
+                          <Trash2 className="h-4 w-4" /> Delete Quotation
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-grow space-y-3 text-sm">
+                  {getStatusBadge(quotation.status)}
+                  <div className="text-muted-foreground space-y-2 border-t pt-3">
+                      <div className="flex items-center gap-2">
+                          <User className="h-4 w-4"/>
+                          <span>Owner: <strong>{quotation.owner.name}</strong></span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4"/>
+                          <span>Valid Until: <strong>{new Date(quotation.validUntil).toLocaleDateString()}</strong></span>
+                      </div>
+                  </div>
+              </CardContent>
+              <CardFooter className="bg-muted/50 py-2 px-4 border-t">
+                <div className="flex justify-between items-center w-full">
+                    <span className="text-xs text-muted-foreground">Total Amount</span>
+                    <span className="font-bold text-base">₱{quotation.totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                </div>
+              </CardFooter>
+            </Card>
+          ))
+        ) : (
+          <div className="lg:col-span-2 xl:col-span-3 text-center py-16 border-2 border-dashed rounded-lg">
+            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium">No sales quotations found</h3>
+            <p className="text-muted-foreground">
+              {searchTerm || statusFilter !== "all" || dateFilter !== "all"
+                ? "Try adjusting your filters"
+                : "Get started by creating your first sales quotation"}
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       <EditSalesQuotationModal
         isOpen={editQuotationOpen}

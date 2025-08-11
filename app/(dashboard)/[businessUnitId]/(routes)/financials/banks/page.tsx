@@ -30,7 +30,7 @@ interface BankAccount {
   iban?: string
   swiftCode?: string
   branch?: string
-  glAccountId: string // Added this missing property
+  glAccountId: string
   glAccount: {
     accountCode: string
     name: string
@@ -172,13 +172,15 @@ const BankAccountsPage = () => {
         </Card>
       </div>
 
-      {/* Search */}
+      {/* Search and Accounts Grid */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Search & Filter</CardTitle>
-          <CardDescription>Find bank accounts by name, bank, or account number</CardDescription>
+          <CardTitle>Bank Accounts ({filteredAccounts.length})</CardTitle>
+          <CardDescription>
+            Find bank accounts by name, bank, or account number
+          </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -188,78 +190,52 @@ const BankAccountsPage = () => {
               className="pl-10"
             />
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Accounts List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Bank Accounts ({filteredAccounts.length})</CardTitle>
-          <CardDescription>
-            Manage your bank accounts and their configurations
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredAccounts.map((account) => (
-              <div
-                key={account.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
-                    <Banknote className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{account.name}</p>
-                      {getCurrencyBadge(account.currency)}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredAccounts.length > 0 ? (
+              filteredAccounts.map((account) => (
+                <Card key={account.id} className="flex flex-col">
+                  <CardHeader>
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
+                        <CardTitle className="text-base">{account.name}</CardTitle>
+                        <CardDescription className="pt-1">{account.bankName}</CardDescription>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => { setSelectedAccount(account); setEditAccountOpen(true); }} className="gap-2">
+                            <Edit className="h-4 w-4" /> Edit Account
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => { setSelectedAccount(account); setDeleteAccountOpen(true); }} className="gap-2 text-destructive focus:text-destructive">
+                            <Trash2 className="h-4 w-4" /> Delete Account
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {account.bankName} | {account.accountNumber}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      GL: {account.glAccount.accountCode} - {account.glAccount.name}
-                    </p>
-                  </div>
-                </div>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedAccount(account)
-                        setEditAccountOpen(true)
-                      }}
-                      className="gap-2"
-                    >
-                      <Edit className="h-4 w-4" />
-                      Edit Account
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedAccount(account)
-                        setDeleteAccountOpen(true)
-                      }}
-                      className="gap-2 text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete Account
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ))}
-
-            {filteredAccounts.length === 0 && (
-              <div className="text-center py-12">
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-3">
+                    <div className="text-sm space-y-2">
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground font-mono text-xs">{account.accountNumber}</span>
+                            {getCurrencyBadge(account.currency)}
+                        </div>
+                        <div className="border-t pt-2 mt-2 text-xs">
+                            <p className="text-muted-foreground">Linked GL Account</p>
+                            <p className="font-medium truncate">{account.glAccount.accountCode} - {account.glAccount.name}</p>
+                        </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="md:col-span-2 xl:col-span-3 text-center py-16 border-2 border-dashed rounded-lg">
                 <Banknote className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium">No bank accounts found</h3>
                 <p className="text-muted-foreground">

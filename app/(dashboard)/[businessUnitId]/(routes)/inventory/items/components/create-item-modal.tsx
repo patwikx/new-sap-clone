@@ -17,21 +17,20 @@ import { Switch } from "@/components/ui/switch"
 import { Package, ChevronsUpDown, Check } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
-import { cn } from "@/lib/utils" // Assuming you have a utility for class names
+import { cn } from "@/lib/utils"
 
+// CHANGED: Updated schema to match the database model
 const createItemSchema = z.object({
   name: z.string().min(1, "Item name is required"),
   description: z.string().optional(),
   itemCode: z.string().min(1, "Item code is required"),
   uomId: z.string().min(1, "Unit of measure is required"),
-  category: z.string().optional(),
-  reorderPoint: z.string().optional().refine((val) => !val || (!isNaN(Number(val)) && Number(val) >= 0), {
-    message: "Reorder point must be a valid positive number"
-  }),
+  inventoryCategoryId: z.string().optional(), // CHANGED: from 'category' to the foreign key
   standardCost: z.string().optional().refine((val) => !val || (!isNaN(Number(val)) && Number(val) >= 0), {
     message: "Standard cost must be a valid positive number"
   }),
   isActive: z.boolean().default(true).optional(),
+  // REMOVED: reorderPoint is not part of the InventoryItem model
 })
 
 interface UoM {
@@ -40,13 +39,19 @@ interface UoM {
   symbol: string
 }
 
+// ADDED: Interface for inventory categories
+interface InventoryCategory {
+    id: string
+    name: string
+}
+
 interface CreateItemModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
 }
 
-// Reusable Combobox Component
+// Reusable Combobox Component (no changes needed)
 const Combobox = ({ options, value, onChange, placeholder }: { options: { value: string, label: string }[], value: string, onChange: (value: string) => void, placeholder: string }) => {
     const [open, setOpen] = useState(false)
     const selectedOption = options.find(option => option.value === value)
@@ -104,6 +109,7 @@ export const CreateItemModal = ({
   
   const [loading, setLoading] = useState(false)
   const [uoms, setUoms] = useState<UoM[]>([])
+  const [categories, setCategories] = useState<InventoryCategory[]>([]) // ADDED: State for categories
 
   const form = useForm<z.infer<typeof createItemSchema>>({
     resolver: zodResolver(createItemSchema),
@@ -112,30 +118,31 @@ export const CreateItemModal = ({
       description: "",
       itemCode: "",
       uomId: "",
-      category: "",
-      reorderPoint: "",
+      inventoryCategoryId: "", // CHANGED
       standardCost: "",
       isActive: true,
     },
   })
 
-  // Fetch UoMs
+  // Fetch UoMs and Categories
   useEffect(() => {
-    const fetchUoms = async () => {
-      try {
-        const response = await axios.get(`/api/${businessUnitId}/uoms`, {
-          headers: {
-            'x-business-unit-id': businessUnitId,
-          },
-        })
-        setUoms(response.data)
-      } catch (error) {
-        console.error("Failed to fetch UoMs:", error)
-      }
+    const fetchData = async () => {
+        try {
+            const [uomRes, categoryRes] = await Promise.all([
+                axios.get(`/api/${businessUnitId}/uoms`, { headers: { 'x-business-unit-id': businessUnitId } }),
+                // ADDED: Fetch inventory categories
+                axios.get(`/api/${businessUnitId}/inventory-categories`, { headers: { 'x-business-unit-id': businessUnitId } })
+            ]);
+            setUoms(uomRes.data);
+            setCategories(categoryRes.data);
+        } catch (error) {
+            console.error("Failed to fetch modal data:", error);
+            toast.error("Failed to load required data.");
+        }
     }
 
     if (isOpen && businessUnitId) {
-      fetchUoms()
+      fetchData()
     }
   }, [isOpen, businessUnitId])
 
@@ -143,23 +150,22 @@ export const CreateItemModal = ({
     try {
       setLoading(true)
       
+      // CHANGED: Payload now sends numbers and the correct category ID
       const payload = {
         ...values,
-        reorderPoint: values.reorderPoint ? parseFloat(values.reorderPoint) : undefined,
         standardCost: values.standardCost ? parseFloat(values.standardCost) : undefined,
+        inventoryCategoryId: values.inventoryCategoryId || null, // Send null if empty
       }
       
       await axios.post(`/api/${businessUnitId}/inventory-items`, payload, {
-        headers: {
-          'x-business-unit-id': businessUnitId
-        }
+        headers: { 'x-business-unit-id': businessUnitId }
       })
 
       toast.success("Inventory item created successfully")
-      form.reset()
-      onSuccess()
+      onSuccess() // Call onSuccess before closing to trigger re-fetch
+      handleClose()
     } catch (error) {
-      toast.error(`Failed to create inventory item: ${error}`)
+      toast.error(`Failed to create item: ${error}`)
     } finally {
       setLoading(false)
     }
@@ -179,13 +185,13 @@ export const CreateItemModal = ({
             Create Inventory Item
           </DialogTitle>
           <DialogDescription>
-            Add a new inventory item to your catalog.
+            Add a new inventory item to your master data catalog.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="itemCode"
@@ -199,27 +205,23 @@ export const CreateItemModal = ({
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="uomId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Unit of Measure</FormLabel>
-                    <FormControl>
                       <Combobox
                         options={uoms.map(uom => ({ value: uom.id, label: `${uom.name} (${uom.symbol})` }))}
                         value={field.value}
                         onChange={field.onChange}
                         placeholder="Select UoM..."
                       />
-                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-
             <FormField
               control={form.control}
               name="name"
@@ -227,19 +229,18 @@ export const CreateItemModal = ({
                 <FormItem>
                   <FormLabel>Item Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Premium Rice" {...field} />
+                    <Input placeholder="e.g., Premium Jasmine Rice" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Description (Optional)</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Detailed description of the item" {...field} />
                   </FormControl>
@@ -247,51 +248,39 @@ export const CreateItemModal = ({
                 </FormItem>
               )}
             />
-
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* CHANGED: This is now a combobox for selecting a category */}
               <FormField
                 control={form.control}
-                name="category"
+                name="inventoryCategoryId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Raw Materials" {...field} />
-                    </FormControl>
+                    <FormLabel>Category (Optional)</FormLabel>
+                    <Combobox
+                      options={categories.map(cat => ({ value: cat.id, label: cat.name }))}
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      placeholder="Select a category..."
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
-                name="reorderPoint"
+                name="standardCost"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Reorder Point</FormLabel>
+                    <FormLabel>Standard Cost (Optional)</FormLabel>
                     <FormControl>
-                      <Input type="number" min="0" step="0.01" placeholder="0" {...field} />
+                      <Input type="number" min="0" step="any" placeholder="0.00" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="standardCost"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Standard Cost</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+            {/* REMOVED: Reorder Point field is gone */}
             <FormField
               control={form.control}
               name="isActive"
@@ -300,7 +289,7 @@ export const CreateItemModal = ({
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Active Status</FormLabel>
                     <div className="text-sm text-muted-foreground">
-                      Item is available for transactions
+                      Allow this item to be used in transactions.
                     </div>
                   </div>
                   <FormControl>
@@ -312,7 +301,6 @@ export const CreateItemModal = ({
                 </FormItem>
               )}
             />
-
             <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancel

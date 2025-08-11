@@ -1474,6 +1474,7 @@ model Modifier {
   id              String         @id @default(uuid())
   name            String
   priceChange     Decimal        @default(0) @db.Decimal(19, 4)
+  price           Decimal?       @default(0)
   quantityUsed    Decimal?       @db.Decimal(19, 6)
   modifierGroupId String
   modifierGroup   ModifierGroup  @relation(fields: [modifierGroupId], references: [id], onDelete: Cascade)
@@ -1539,6 +1540,8 @@ model PosTerminal {
 model Table {
   id             String        @id @default(uuid())
   name           String
+  capacity       String?
+  location       String?
   businessUnitId String
   businessUnit   BusinessUnit  @relation(fields: [businessUnitId], references: [id])
   status         TableStatus   @default(AVAILABLE)
@@ -1616,6 +1619,7 @@ model Order {
   arInvoice               ARInvoice?          @relation(fields: [arInvoiceId], references: [id])
   specialInstructions     String?
   estimatedCompletionTime DateTime?
+  paidAt                  DateTime?
   createdAt               DateTime            @default(now())
   updatedAt               DateTime            @updatedAt
 }

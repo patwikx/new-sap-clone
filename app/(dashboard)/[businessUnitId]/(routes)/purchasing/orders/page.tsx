@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Plus, Search, MoreHorizontal, Edit, Trash2, ShoppingCart, CheckCircle, Clock, XCircle, Truck, Eye, FileText } from "lucide-react"
+import { Plus, Search, MoreHorizontal, Edit, Trash2, ShoppingCart, CheckCircle, Clock, XCircle, Truck, Eye, FileText, User, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
@@ -140,7 +140,7 @@ const PurchaseOrdersPage = () => {
       await axios.delete(`/api/${businessUnitId}/purchase-orders/${selectedOrder.id}`, {
         headers: {
           'x-business-unit-id': businessUnitId,
-          'x-order-id': selectedOrder.id // Added for consistency
+          'x-order-id': selectedOrder.id
         }
       })
       toast.success("Purchase order deleted successfully")
@@ -158,7 +158,7 @@ const PurchaseOrdersPage = () => {
       await axios.patch(`/api/${businessUnitId}/purchase-orders/${order.id}/close`, {}, {
         headers: {
           'x-business-unit-id': businessUnitId,
-          'x-order-id': order.id // Added for consistency
+          'x-order-id': order.id
         }
       })
       toast.success("Purchase order closed successfully")
@@ -217,10 +217,10 @@ const PurchaseOrdersPage = () => {
             Manage purchase orders and vendor procurement
           </p>
         </div>
-<Button onClick={() => router.push(`/${businessUnitId}/purchasing/orders/new`)} className="gap-2">
-        <Plus className="h-4 w-4" />
-        New Order
-      </Button>
+        <Button onClick={() => router.push(`/${businessUnitId}/purchasing/orders/new`)} className="gap-2">
+          <Plus className="h-4 w-4" />
+          New Order
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -266,7 +266,7 @@ const PurchaseOrdersPage = () => {
       {/* Filters and Search */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle className="text-lg">Filters & Search</CardTitle>
           <CardDescription>Filter and search purchase orders by various criteria</CardDescription>
         </CardHeader>
         <CardContent>
@@ -283,7 +283,7 @@ const PurchaseOrdersPage = () => {
               </div>
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -294,7 +294,7 @@ const PurchaseOrdersPage = () => {
               </SelectContent>
             </Select>
             <Select value={dateFilter} onValueChange={setDateFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Filter by date" />
               </SelectTrigger>
               <SelectContent>
@@ -308,125 +308,101 @@ const PurchaseOrdersPage = () => {
         </CardContent>
       </Card>
 
-      {/* Orders List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Purchase Orders ({filteredOrders.length})</CardTitle>
-          <CardDescription>
-            Manage your purchase orders and track delivery status
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredOrders.map((order) => {
-              const progress = getReceiptProgress(order)
-              
-              return (
-                <div
-                  key={order.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
-                      <ShoppingCart className="h-5 w-5 text-primary" />
+      {/* Orders Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredOrders.length > 0 ? (
+          filteredOrders.map((order) => {
+            const progress = getReceiptProgress(order);
+            return (
+              <Card key={order.id} className="flex flex-col">
+                <CardHeader>
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1">
+                      <CardTitle className="text-base">{order.poNumber}</CardTitle>
+                      <CardDescription className="pt-1">
+                        {order.businessPartner.name}
+                      </CardDescription>
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{order.poNumber}</p>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => router.push(`/${businessUnitId}/purchasing/orders/${order.id}`)} className="gap-2">
+                          <Eye className="h-4 w-4" /> View Details
+                        </DropdownMenuItem>
+                        {order.status === 'OPEN' && (
+                          <>
+                            <DropdownMenuItem onClick={() => toast.info("Edit functionality coming soon")} className="gap-2">
+                              <Edit className="h-4 w-4" /> Edit Order
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toast.info("Create goods receipt functionality coming soon")} className="gap-2">
+                              <Truck className="h-4 w-4" /> Create Receipt
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleCloseOrder(order)} className="gap-2">
+                              <CheckCircle className="h-4 w-4" /> Close Order
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        <DropdownMenuSeparator />
+                        {order.status !== 'CLOSED' && (
+                          <DropdownMenuItem onClick={() => { setSelectedOrder(order); setDeleteOrderOpen(true); }} className="gap-2 text-destructive focus:text-destructive">
+                            <Trash2 className="h-4 w-4" /> Delete Order
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-grow space-y-3 text-sm">
+                    <div className="flex items-center gap-2">
                         {getStatusBadge(order.status)}
                         {order.purchaseRequest && (
-                          <Badge variant="outline" className="text-xs">
-                            From {order.purchaseRequest.prNumber}
-                          </Badge>
+                            <Badge variant="outline" className="text-xs">
+                                From {order.purchaseRequest.prNumber}
+                            </Badge>
                         )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Vendor: {order.businessPartner.name} | 
-                        Owner: {order.owner.name} | 
-                        Delivery: {new Date(order.deliveryDate).toLocaleDateString()}
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>Amount: ₱{order.totalAmount.toLocaleString()}</span>
-                        <span>Items: {order.items.length}</span>
-                        <span>Receipt: {progress.received}/{progress.total} ({progress.percentage}%)</span>
-                      </div>
                     </div>
+                    <div className="text-muted-foreground space-y-2 border-t pt-3">
+                        <div className="flex items-center gap-2">
+                            <User className="h-4 w-4"/>
+                            <span>Owner: <strong>{order.owner.name}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4"/>
+                            <span>Delivery by <strong>{new Date(order.deliveryDate).toLocaleDateString()}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Truck className="h-4 w-4"/>
+                            <span>Receipt: {progress.received}/{progress.total} ({progress.percentage}%)</span>
+                        </div>
+                    </div>
+                </CardContent>
+                <CardFooter className="bg-muted/50 py-2 px-4 border-t">
+                  <div className="flex justify-between items-center w-full">
+                      <span className="text-xs text-muted-foreground">Total Amount</span>
+                      <span className="font-bold text-base">₱{order.totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
                   </div>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem
-                        onClick={() => router.push(`/${businessUnitId}/purchasing/orders/${order.id}`)}
-                        className="gap-2"
-                      >
-                        <Eye className="h-4 w-4" />
-                        View Details
-                      </DropdownMenuItem>
-                      {order.status === 'OPEN' && (
-                        <>
-                          <DropdownMenuItem
-                            onClick={() => toast.info("Edit functionality coming soon")}
-                            className="gap-2"
-                          >
-                            <Edit className="h-4 w-4" />
-                            Edit Order
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => toast.info("Create goods receipt functionality coming soon")}
-                            className="gap-2"
-                          >
-                            <Truck className="h-4 w-4" />
-                            Create Receipt
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleCloseOrder(order)}
-                            className="gap-2"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Close Order
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                      <DropdownMenuSeparator />
-                      {order.status !== 'CLOSED' && (
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedOrder(order)
-                            setDeleteOrderOpen(true)
-                          }}
-                          className="gap-2 text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Delete Order
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              )
-            })}
-
-            {filteredOrders.length === 0 && (
-              <div className="text-center py-12">
-                <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No purchase orders found</h3>
-                <p className="text-muted-foreground">
-                  {searchTerm || statusFilter !== "all" || dateFilter !== "all"
-                    ? "Try adjusting your filters"
-                    : "Get started by creating your first purchase order"}
-                </p>
-              </div>
-            )}
+                </CardFooter>
+              </Card>
+            )
+          })
+        ) : (
+          <div className="lg:col-span-2 xl:col-span-3 text-center py-16 border-2 border-dashed rounded-lg">
+            <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium">No purchase orders found</h3>
+            <p className="text-muted-foreground">
+              {searchTerm || statusFilter !== "all" || dateFilter !== "all"
+                ? "Try adjusting your filters"
+                : "Get started by creating your first purchase order"}
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       <AlertModal
         isOpen={deleteOrderOpen}

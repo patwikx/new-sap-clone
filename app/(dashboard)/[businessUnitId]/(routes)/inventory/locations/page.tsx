@@ -31,7 +31,7 @@ interface InventoryLocation {
   phone?: string
   stocks: {
     id: string
-    quantityOnHand: number
+    quantityOnHand: number | string // Allow string to handle API data gracefully
     inventoryItem: {
       name: string
     }
@@ -90,8 +90,10 @@ const InventoryLocationsPage = () => {
   // Calculate metrics
   const totalLocations = locations.length
   const totalStockRecords = locations.reduce((sum, loc) => sum + loc.stocks.length, 0)
-  const totalStockValue = locations.reduce((sum, loc) => 
-    sum + loc.stocks.reduce((locSum, stock) => locSum + stock.quantityOnHand, 0), 0)
+  
+  // FIXED: Ensure values are treated as numbers before adding them up.
+  const totalStockQuantity = locations.reduce((sum, loc) => 
+    sum + loc.stocks.reduce((locSum, stock) => locSum + Number(stock.quantityOnHand), 0), 0)
 
   // Location actions
   const handleDeleteLocation = async () => {
@@ -138,11 +140,11 @@ const InventoryLocationsPage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Locations</CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalLocations}</div>
@@ -153,35 +155,36 @@ const InventoryLocationsPage = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Stock Records</CardTitle>
-            <Package className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-medium">Unique Items</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalStockRecords}</div>
             <p className="text-xs text-muted-foreground">
-              Items across all locations
+              Stocked item varieties
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Quantity</CardTitle>
-            <Building2 className="h-4 w-4 text-green-600" />
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalStockValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{totalStockQuantity.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              Units in all locations
+              Total units on hand
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg Items/Location</CardTitle>
-            <Users className="h-4 w-4 text-purple-600" />
+            <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
+              {/* FIXED: Use Math.round for a clean integer display. */}
               {totalLocations > 0 ? Math.round(totalStockRecords / totalLocations) : 0}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -191,136 +194,107 @@ const InventoryLocationsPage = () => {
         </Card>
       </div>
 
-      {/* Search */}
+      {/* Search and Locations Grid */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Search & Filter</CardTitle>
-          <CardDescription>Find inventory locations by name, description, or contact</CardDescription>
+          <CardTitle>Locations ({filteredLocations.length})</CardTitle>
+          <CardDescription>Search for a location or browse the list below.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search inventory locations..."
+              placeholder="Search by name, description, or contact..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Locations List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Inventory Locations ({filteredLocations.length})</CardTitle>
-          <CardDescription>
-            Manage your warehouse and storage locations
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredLocations.map((location) => (
-              <div
-                key={location.id}
-                className="flex items-center justify-between p-6 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10">
-                    <MapPin className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-lg">{location.name}</h3>
-                      <Badge variant="outline" className="gap-1">
-                        <Package className="h-3 w-3" />
-                        {location.stocks.length} items
-                      </Badge>
+          {filteredLocations.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredLocations.map((location) => (
+                <Card key={location.id} className="flex flex-col">
+                  <CardHeader>
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
+                        <CardTitle>{location.name}</CardTitle>
+                        <CardDescription className="pt-2">
+                          {location.description || "No description provided."}
+                        </CardDescription>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => { setSelectedLocation(location); setEditLocationOpen(true); }} className="gap-2">
+                            <Edit className="h-4 w-4" /> Edit Location
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => { setSelectedLocation(location); setDeleteLocationOpen(true); }} className="gap-2 text-destructive focus:text-destructive">
+                            <Trash2 className="h-4 w-4" /> Delete Location
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                    {location.description && (
-                      <p className="text-sm text-muted-foreground">{location.description}</p>
-                    )}
-                    <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                      {location.address && (
-                        <div className="flex items-center gap-1">
-                          <Building2 className="h-3 w-3" />
-                          {location.address}
-                        </div>
-                      )}
-                      {location.contactPerson && (
-                        <div className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {location.contactPerson}
-                          {location.phone && ` • ${location.phone}`}
-                        </div>
-                      )}
+                  </CardHeader>
+                  <CardContent className="space-y-4 flex-grow">
+                     <div className="space-y-2 text-sm text-muted-foreground">
+                        {location.address && (
+                            <div className="flex items-center gap-2">
+                                <Building2 className="h-4 w-4 flex-shrink-0" />
+                                <span>{location.address}</span>
+                            </div>
+                        )}
+                        {location.contactPerson && (
+                            <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4 flex-shrink-0" />
+                                <span>{location.contactPerson}{location.phone && ` • ${location.phone}`}</span>
+                            </div>
+                        )}
                     </div>
                     {location.stocks.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {location.stocks.slice(0, 3).map((stock) => (
-                          <Badge key={stock.id} variant="secondary" className="text-xs">
-                            {stock.inventoryItem.name}: {stock.quantityOnHand}
-                          </Badge>
-                        ))}
-                        {location.stocks.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{location.stocks.length - 3} more
-                          </Badge>
-                        )}
+                      <div className="border-t pt-4">
+                        <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+                          Stock Highlights ({location.stocks.reduce((sum, s) => sum + Number(s.quantityOnHand), 0).toLocaleString()} total units)
+                        </h4>
+                        <div className="flex flex-wrap gap-1">
+                          {location.stocks.slice(0, 5).map((stock) => (
+                            <Badge key={stock.id} variant="secondary" className="text-xs">
+                              {/* FIXED: Format the number for display. */}
+                              {stock.inventoryItem.name}: {Number(stock.quantityOnHand).toLocaleString()}
+                            </Badge>
+                          ))}
+                          {location.stocks.length > 5 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{location.stocks.length - 5} more
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     )}
-                  </div>
-                </div>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedLocation(location)
-                        setEditLocationOpen(true)
-                      }}
-                      className="gap-2"
-                    >
-                      <Edit className="h-4 w-4" />
-                      Edit Location
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedLocation(location)
-                        setDeleteLocationOpen(true)
-                      }}
-                      className="gap-2 text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete Location
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ))}
-
-            {filteredLocations.length === 0 && (
-              <div className="text-center py-12">
-                <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No inventory locations found</h3>
-                <p className="text-muted-foreground">
-                  {searchTerm
-                    ? "Try adjusting your search terms"
-                    : "Get started by adding your first inventory location"}
-                </p>
-              </div>
-            )}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 border-2 border-dashed rounded-lg">
+              <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium">No inventory locations found</h3>
+              <p className="text-muted-foreground">
+                {searchTerm
+                  ? "Try adjusting your search terms"
+                  : "Get started by adding your first inventory location"}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
-
+      
       {/* Modals */}
       <CreateLocationModal
         isOpen={createLocationOpen}

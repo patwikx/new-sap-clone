@@ -221,7 +221,7 @@ const ChartOfAccountsPage = () => {
       {/* Filters and Search */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle className="text-lg">Filters & Search</CardTitle>
           <CardDescription>Filter and search GL accounts by various criteria</CardDescription>
         </CardHeader>
         <CardContent>
@@ -238,7 +238,7 @@ const ChartOfAccountsPage = () => {
               </div>
             </div>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
               <SelectContent>
@@ -251,7 +251,7 @@ const ChartOfAccountsPage = () => {
               </SelectContent>
             </Select>
             <Select value={balanceFilter} onValueChange={setBalanceFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Filter by balance" />
               </SelectTrigger>
               <SelectContent>
@@ -264,89 +264,62 @@ const ChartOfAccountsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Accounts List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>GL Accounts ({filteredAccounts.length})</CardTitle>
-          <CardDescription>
-            Manage your chart of accounts and account structure
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredAccounts.map((account) => (
-              <div
-                key={account.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
-                    <FileText className="h-5 w-5 text-primary" />
+      {/* Accounts Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredAccounts.length > 0 ? (
+          filteredAccounts.map((account) => (
+            <Card key={account.id} className="flex flex-col">
+              <CardHeader>
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <CardTitle className="text-base">{account.name}</CardTitle>
+                    <CardDescription className="font-mono text-xs pt-1">{account.accountCode}</CardDescription>
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{account.accountCode} - {account.name}</p>
-                      {getTypeBadge(account.accountType.name)}
-                      {getBalanceBadge(account.normalBalance)}
-                      {account.isControlAccount && (
-                        <Badge variant="outline" className="text-xs">Control</Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {account.accountCategory?.name}
-                      {account.description && ` | ${account.description}`}
-                    </p>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => { setSelectedAccount(account); setEditAccountOpen(true); }} className="gap-2">
+                        <Edit className="h-4 w-4" /> Edit Account
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => { setSelectedAccount(account); setDeleteAccountOpen(true); }} className="gap-2 text-destructive focus:text-destructive">
+                        <Trash2 className="h-4 w-4" /> Delete Account
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedAccount(account)
-                        setEditAccountOpen(true)
-                      }}
-                      className="gap-2"
-                    >
-                      <Edit className="h-4 w-4" />
-                      Edit Account
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedAccount(account)
-                        setDeleteAccountOpen(true)
-                      }}
-                      className="gap-2 text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete Account
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ))}
-
-            {filteredAccounts.length === 0 && (
-              <div className="text-center py-12">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No GL accounts found</h3>
-                <p className="text-muted-foreground">
-                  {searchTerm || typeFilter !== "all" || balanceFilter !== "all"
-                    ? "Try adjusting your filters"
-                    : "Your chart of accounts will appear here"}
+              </CardHeader>
+              <CardContent className="flex-grow space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {getTypeBadge(account.accountType.name)}
+                  {getBalanceBadge(account.normalBalance)}
+                  {account.isControlAccount && (
+                    <Badge variant="outline" className="text-xs">Control Account</Badge>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground pt-2 border-t">
+                  {account.description || "No description provided."}
                 </p>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="md:col-span-2 xl:col-span-3 text-center py-16 border-2 border-dashed rounded-lg">
+            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium">No GL accounts found</h3>
+            <p className="text-muted-foreground">
+              {searchTerm || typeFilter !== "all" || balanceFilter !== "all"
+                ? "Try adjusting your filters"
+                : "Your chart of accounts will appear here"}
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       {/* Modals */}
       <CreateGlAccountModal

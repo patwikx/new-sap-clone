@@ -36,9 +36,18 @@ export async function GET(req: NextRequest) {
             symbol: true
           }
         },
-        // Include the stock levels and their locations
+        // CHANGED: Use the correct relation name from your schema
+        inventoryCategory: {
+          select: {
+            name: true
+          }
+        },
+        // RENAMED for clarity, this is the relation from your schema
         stockLevels: {
-          include: {
+          select: {
+            id: true,
+            quantityOnHand: true,
+            reorderPoint: true, // CHANGED: Fetch the reorderPoint for each stock location
             location: {
               select: {
                 name: true
@@ -52,13 +61,17 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    // Map the result to match the client-side interface (stockLevels -> stocks)
+    // Map the result to match the client-side interface
     const itemsWithStocks = inventoryItems.map(item => {
-        const { stockLevels, ...rest } = item;
-        return {
-            ...rest,
-            stocks: stockLevels
-        }
+      // De-structure the correct relation names
+      const { stockLevels, inventoryCategory, ...rest } = item;
+      return {
+        ...rest,
+        // Flatten the category object into a simple string
+        category: inventoryCategory?.name,
+        // Rename stockLevels to stocks to match the frontend
+        stocks: stockLevels
+      }
     })
 
     return NextResponse.json(itemsWithStocks)

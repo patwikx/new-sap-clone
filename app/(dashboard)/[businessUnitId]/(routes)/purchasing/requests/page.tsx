@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Plus, Search, MoreHorizontal, Edit, Trash2, ClipboardList, CheckCircle, Clock, XCircle, AlertTriangle, Eye } from "lucide-react"
+import { Plus, Search, MoreHorizontal, Edit, Trash2, ClipboardList, CheckCircle, Clock, XCircle, AlertTriangle, Eye, User, Calendar, ShoppingCart, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
@@ -119,7 +119,7 @@ const PurchaseRequestsPage = () => {
       await axios.delete(`/api/${businessUnitId}/purchase-requests/${selectedRequest.id}`, {
         headers: {
           'x-business-unit-id': businessUnitId,
-          'x-request-id': selectedRequest.id // Added for consistency
+          'x-request-id': selectedRequest.id
         }
       })
       toast.success("Purchase request deleted successfully")
@@ -137,7 +137,7 @@ const PurchaseRequestsPage = () => {
       await axios.patch(`/api/${businessUnitId}/purchase-requests/${request.id}/approve`, {}, {
         headers: {
           'x-business-unit-id': businessUnitId,
-          'x-request-id': request.id // Added header to fix server error
+          'x-request-id': request.id
         }
       })
       toast.success("Purchase request approved successfully")
@@ -153,7 +153,7 @@ const PurchaseRequestsPage = () => {
       await axios.patch(`/api/${businessUnitId}/purchase-requests/${request.id}/reject`, {}, {
         headers: {
           'x-business-unit-id': businessUnitId,
-          'x-request-id': request.id // Added header to fix server error
+          'x-request-id': request.id
         }
       })
       toast.success("Purchase request rejected")
@@ -217,7 +217,7 @@ const PurchaseRequestsPage = () => {
             Create and manage purchase requests for procurement approval
           </p>
         </div>
- <Button onClick={() => router.push(`/${businessUnitId}/purchasing/requests/new`)} className="gap-2">
+        <Button onClick={() => router.push(`/${businessUnitId}/purchasing/requests/new`)} className="gap-2">
           <Plus className="h-4 w-4" />
           New Request
         </Button>
@@ -275,7 +275,7 @@ const PurchaseRequestsPage = () => {
       {/* Filters and Search */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle className="text-lg">Filters & Search</CardTitle>
           <CardDescription>Filter and search purchase requests by various criteria</CardDescription>
         </CardHeader>
         <CardContent>
@@ -284,7 +284,7 @@ const PurchaseRequestsPage = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search by PR number, requestor, or item description..."
+                  placeholder="Search by PR number, requestor, or item..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -292,7 +292,7 @@ const PurchaseRequestsPage = () => {
               </div>
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -305,7 +305,7 @@ const PurchaseRequestsPage = () => {
               </SelectContent>
             </Select>
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Filter by priority" />
               </SelectTrigger>
               <SelectContent>
@@ -320,127 +320,98 @@ const PurchaseRequestsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Requests List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Purchase Requests ({filteredRequests.length})</CardTitle>
-          <CardDescription>
-            Manage purchase requests and their approval workflow
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredRequests.map((request) => (
-              <div
-                key={request.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
-                    <ClipboardList className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{request.prNumber}</p>
-                      {getStatusBadge(request.status)}
-                      {getPriorityBadge(request.priority)}
+      {/* Requests Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredRequests.length > 0 ? (
+          filteredRequests.map((request) => (
+            <Card key={request.id} className="flex flex-col">
+              <CardHeader>
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <CardTitle className="text-base">{request.prNumber}</CardTitle>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                        {getStatusBadge(request.status)}
+                        {getPriorityBadge(request.priority)}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Requested by: {request.requestor.name} | 
-                      Required: {new Date(request.requiredDate).toLocaleDateString()} | 
-                      Items: {request.items.length} | 
-                      Est. Amount: ₱{request.totalEstimatedAmount.toLocaleString()}
-                    </p>
-                    {request.justification && (
-                      <p className="text-xs text-muted-foreground max-w-md truncate">
-                        {request.justification}
-                      </p>
-                    )}
                   </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => router.push(`/${businessUnitId}/purchasing/requests/${request.id}`)} className="gap-2">
+                        <Eye className="h-4 w-4" /> View Details
+                      </DropdownMenuItem>
+                      {request.status === 'PENDING' && (
+                        <>
+                          <DropdownMenuItem onClick={() => toast.info("Edit functionality coming soon")} className="gap-2">
+                            <Edit className="h-4 w-4" /> Edit Request
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleApproveRequest(request)} className="gap-2 text-green-600 focus:text-green-600">
+                            <CheckCircle className="h-4 w-4" /> Approve
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleRejectRequest(request)} className="gap-2 text-red-600 focus:text-red-600">
+                            <XCircle className="h-4 w-4" /> Reject
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => { setSelectedRequest(request); setDeleteRequestOpen(true); }} className="gap-2 text-destructive focus:text-destructive">
+                            <Trash2 className="h-4 w-4" /> Delete Request
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      {request.status === 'APPROVED' && (
+                        <DropdownMenuItem onClick={() => toast.info("Create PO functionality coming soon")} className="gap-2">
+                          <Plus className="h-4 w-4" /> Create PO
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => router.push(`/${businessUnitId}/purchasing/requests/${request.id}`)}
-                      className="gap-2"
-                    >
-                      <Eye className="h-4 w-4" />
-                      View Details
-                    </DropdownMenuItem>
-                    {request.status === 'PENDING' && (
-                      <>
-                        <DropdownMenuItem
-                          onClick={() => toast.info("Edit functionality coming soon")}
-                          className="gap-2"
-                        >
-                          <Edit className="h-4 w-4" />
-                          Edit Request
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleApproveRequest(request)}
-                          className="gap-2 text-green-600"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                          Approve
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleRejectRequest(request)}
-                          className="gap-2 text-red-600"
-                        >
-                          <XCircle className="h-4 w-4" />
-                          Reject
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    {request.status === 'APPROVED' && (
-                      <DropdownMenuItem
-                        onClick={() => toast.info("Create PO functionality coming soon")}
-                        className="gap-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Create PO
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    {request.status === 'PENDING' && (
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setSelectedRequest(request)
-                          setDeleteRequestOpen(true)
-                        }}
-                        className="gap-2 text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete Request
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ))}
-
-            {filteredRequests.length === 0 && (
-              <div className="text-center py-12">
-                <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No purchase requests found</h3>
-                <p className="text-muted-foreground">
-                  {searchTerm || statusFilter !== "all" || priorityFilter !== "all"
-                    ? "Try adjusting your filters"
-                    : "Get started by creating your first purchase request"}
-                </p>
-              </div>
-            )}
+              </CardHeader>
+              <CardContent className="flex-grow space-y-3 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <User className="h-4 w-4"/>
+                    <span>Requested by <strong>{request.requestor.name}</strong></span>
+                </div>
+                 <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="h-4 w-4"/>
+                    <span>Required by <strong>{new Date(request.requiredDate).toLocaleDateString()}</strong></span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <ShoppingCart className="h-4 w-4"/>
+                    <span>{request.items.length} line item(s)</span>
+                </div>
+                {request.justification && (
+                    <div className="flex items-start gap-2 text-muted-foreground border-t pt-3">
+                        <FileText className="h-4 w-4 mt-0.5 flex-shrink-0"/>
+                        <p className="line-clamp-2">{request.justification}</p>
+                    </div>
+                )}
+              </CardContent>
+              <CardFooter className="bg-muted/50 py-2 px-4 border-t">
+                <div className="flex justify-between items-center w-full">
+                    <span className="text-xs text-muted-foreground">Estimated Total</span>
+                    <span className="font-bold text-base">₱{request.totalEstimatedAmount.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                </div>
+              </CardFooter>
+            </Card>
+          ))
+        ) : (
+          <div className="lg:col-span-2 xl:col-span-3 text-center py-16 border-2 border-dashed rounded-lg">
+            <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium">No purchase requests found</h3>
+            <p className="text-muted-foreground">
+              {searchTerm || statusFilter !== "all" || priorityFilter !== "all"
+                ? "Try adjusting your filters"
+                : "Get started by creating your first purchase request"}
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       <AlertModal
         isOpen={deleteRequestOpen}
