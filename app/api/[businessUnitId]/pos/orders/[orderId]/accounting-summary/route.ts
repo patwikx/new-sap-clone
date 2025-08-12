@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
-import { AccountingService } from "@/lib/services/accounting-service"
+import { PosAccountingService } from "@/lib/services/pos-accounting-service"
 
 export async function GET(
   req: NextRequest,
@@ -24,7 +24,7 @@ export async function GET(
     }
 
     // Get accounting summary
-    const summary = await AccountingService.getOrderAccountingSummary(orderId)
+    const summary = await PosAccountingService.getOrderAccountingSummary(orderId)
 
     return NextResponse.json(summary)
   } catch (error) {

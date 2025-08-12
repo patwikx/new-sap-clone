@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
-import { AccountingService } from "@/lib/services/accounting-service"
+import { PosAccountingService } from "@/lib/services/pos-accounting-service"
 
 export async function POST(
   req: NextRequest,
@@ -40,7 +40,7 @@ export async function POST(
     }
 
     // Post order to GL
-    const result = await AccountingService.postOrderToGl(orderId)
+    const result = await PosAccountingService.postOrderToGl(orderId)
 
     return NextResponse.json({
       success: true,

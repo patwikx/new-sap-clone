@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { AccountingService } from "./accounting-service"
+import { PosAccountingService } from "./pos-accounting-service"
 
 export class PosService {
   /**
@@ -62,7 +62,7 @@ export class PosService {
       // Post to GL if requested
       if (autoPostToGl) {
         try {
-          accountingResult = await AccountingService.postOrderToGl(orderId)
+          accountingResult = await PosAccountingService.postOrderToGl(orderId)
         } catch (error) {
           console.error('Failed to post order to GL:', error)
           // Don't fail the entire transaction - log the error for manual posting
@@ -84,55 +84,7 @@ export class PosService {
    * @returns Promise<ValidationResult>
    */
   static async validatePosConfiguration(businessUnitId: string) {
-    const issues: string[] = []
-
-    // Check GL configuration
-    const glValidation = await AccountingService.validatePosGlConfiguration(businessUnitId)
-    if (!glValidation.isValid) {
-      issues.push(...glValidation.missingAccounts)
-    }
-
-    // Check numbering series
-    const arSeries = await prisma.numberingSeries.findFirst({
-      where: {
-        businessUnitId,
-        documentType: 'AR_INVOICE'
-      }
-    })
-
-    if (!arSeries) {
-      issues.push('AR Invoice numbering series not configured')
-    }
-
-    const jeSeries = await prisma.numberingSeries.findFirst({
-      where: {
-        businessUnitId,
-        documentType: 'JOURNAL_ENTRY'
-      }
-    })
-
-    if (!jeSeries) {
-      issues.push('Journal Entry numbering series not configured')
-    }
-
-    // Check accounting period
-    const openPeriod = await prisma.accountingPeriod.findFirst({
-      where: {
-        businessUnitId,
-        status: 'OPEN',
-        startDate: { lte: new Date() },
-        endDate: { gte: new Date() }
-      }
-    })
-
-    if (!openPeriod) {
-      issues.push('No open accounting period found')
-    }
-
-    return {
-      isValid: issues.length === 0,
-      issues
-    }
+    return await PosAccountingService.validateConfiguration(businessUnitId)
   }
 
   /**

@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react"
 import axios from "axios"
 import { toast } from "sonner"
-import type { AccountingSummary, ValidationResult } from "@/lib/services"
+import type { PosAccountingSummary } from "@/lib/services/pos-accounting-service"
+
+interface ValidationResult {
+  isValid: boolean
+  issues: string[]
+  warnings: string[]
+}
 
 export function useOrderAccounting(orderId: string, businessUnitId: string) {
-  const [summary, setSummary] = useState<AccountingSummary | null>(null)
+  const [summary, setSummary] = useState<PosAccountingSummary | null>(null)
   const [loading, setLoading] = useState(false)
   const [posting, setPosting] = useState(false)
 
@@ -71,40 +77,5 @@ export function useOrderAccounting(orderId: string, businessUnitId: string) {
     posting,
     fetchSummary,
     postToGl
-  }
-}
-
-export function usePosValidation(businessUnitId: string) {
-  const [validation, setValidation] = useState<ValidationResult | null>(null)
-  const [loading, setLoading] = useState(false)
-
-  const validateConfiguration = async () => {
-    if (!businessUnitId) return
-
-    try {
-      setLoading(true)
-      const response = await axios.get(
-        `/api/${businessUnitId}/pos/validate-configuration`,
-        {
-          headers: { "x-business-unit-id": businessUnitId }
-        }
-      )
-      setValidation(response.data)
-    } catch (error) {
-      console.error("Failed to validate POS configuration:", error)
-      toast.error("Failed to validate POS configuration")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    validateConfiguration()
-  }, [businessUnitId])
-
-  return {
-    validation,
-    loading,
-    validateConfiguration
   }
 }

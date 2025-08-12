@@ -13,6 +13,7 @@ import { OrderCard } from "./components/order-card"
 import { SettlementDialog } from "./components/settlement-dialog"
 import { CustomerDialog } from "./components/customer-dialog"
 import type { Table, MenuItem, MenuCategory, ExistingOrder } from "@/types/pos"
+import { ConfigurationValidator } from "@/components/pos/configuration-validator"
 
 const POSPage = () => {
   const params = useParams()
@@ -236,6 +237,10 @@ const POSPage = () => {
               <Receipt className="h-4 w-4" />
               View Orders
             </Button>
+            <Button variant="outline" onClick={() => router.push(`/${businessUnitId}/pos/configuration`)} className="gap-2 bg-transparent">
+              <Settings className="h-4 w-4" />
+              Configuration
+            </Button>
           </div>
         </div>
 
@@ -358,15 +363,22 @@ const POSPage = () => {
               onRefresh={fetchTables}
             />
           ) : (
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center">
-                  <Store className="h-8 w-8 text-muted-foreground" />
+            <div className="flex-1 flex flex-col">
+              <div className="flex-1 flex items-center justify-center p-6">
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center">
+                    <Store className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Select a Table</h3>
+                    <p className="text-sm text-muted-foreground">Click on a table to start taking orders</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-medium">Select a Table</h3>
-                  <p className="text-sm text-muted-foreground">Click on a table to start taking orders</p>
-                </div>
+              </div>
+              
+              {/* Configuration Status */}
+              <div className="p-4 border-t">
+                <ConfigurationValidator businessUnitId={businessUnitId} />
               </div>
             </div>
           )}

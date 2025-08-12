@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@prisma/client"
+import { PosAccountingService } from "@/lib/services/pos-accounting-service"
 
 interface SettlementInput {
   orderId: string
@@ -240,6 +241,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bus
               })
             }
           }
+        }
+      }
+
+      // Check if auto-posting to GL is enabled
+      const posConfig = await tx.posConfiguration.findUnique({
+        where: { businessUnitId }
+      })
+
+      if (posConfig?.autoPostToGl) {
+        try {
+          // Automatically post to General Ledger
+          await PosAccountingService.postOrderToGl(order.id, tx)
+          console.log("[POS_SETTLEMENTS_POST] Order automatically posted to GL")
+        } catch (glError) {
+          console.error("[POS_SETTLEMENTS_POST] Failed to auto-post to GL:", glError)
+          // Don't fail the settlement - log for manual posting
+          warnings.push("Payment completed but failed to post to GL automatically. Manual posting required.")
         }
       }
 

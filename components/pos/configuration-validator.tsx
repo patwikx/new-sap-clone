@@ -11,15 +11,48 @@ import {
   Settings,
   ExternalLink
 } from "lucide-react"
-import { usePosValidation } from "@/lib/hooks/use-accounting"
+import { useState, useEffect } from "react"
+import axios from "axios"
+import { toast } from "sonner"
 import Link from "next/link"
+
+interface ValidationResult {
+  isValid: boolean
+  issues: string[]
+  warnings: string[]
+}
 
 interface ConfigurationValidatorProps {
   businessUnitId: string
 }
 
 export function ConfigurationValidator({ businessUnitId }: ConfigurationValidatorProps) {
-  const { validation, loading, validateConfiguration } = usePosValidation(businessUnitId)
+  const [validation, setValidation] = useState<ValidationResult | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const validateConfiguration = async () => {
+    if (!businessUnitId) return
+
+    try {
+      setLoading(true)
+      const response = await axios.get(
+        `/api/${businessUnitId}/pos/validate-configuration`,
+        {
+          headers: { "x-business-unit-id": businessUnitId }
+        }
+      )
+      setValidation(response.data)
+    } catch (error) {
+      console.error("Failed to validate POS configuration:", error)
+      toast.error("Failed to validate POS configuration")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    validateConfiguration()
+  }, [businessUnitId])
 
   if (loading) {
     return (
@@ -100,6 +133,12 @@ export function ConfigurationValidator({ businessUnitId }: ConfigurationValidato
                 <Link href={`/${businessUnitId}/pos/menu`}>
                   <ExternalLink className="h-3 w-3 mr-1" />
                   Configure Menu
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/${businessUnitId}/pos/configuration`}>
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  POS Configuration
                 </Link>
               </Button>
               <Button variant="outline" size="sm" asChild>

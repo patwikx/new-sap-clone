@@ -87,6 +87,7 @@ const navigation: NavItem[] = [
     icon: Store,
     children: [
       { title: "POS", href: "/pos", icon: Store },
+      { title: "POS Configuration", href: "/pos/configuration", icon: Settings },
       { title: "POS Terminals", href: "/pos/terminals", icon: Computer },
       { title: "Orders", href: "/pos/orders", icon: Receipt },
       { title: "Menu Management", href: "/pos/menu", icon: Utensils },
