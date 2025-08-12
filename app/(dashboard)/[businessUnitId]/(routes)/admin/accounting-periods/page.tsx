@@ -214,7 +214,7 @@ const AccountingPeriodsPage = () => {
       {/* Filters and Search */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle className="text-lg">Filters & Search</CardTitle>
           <CardDescription>Filter and search accounting periods by various criteria</CardDescription>
         </CardHeader>
         <CardContent>
@@ -231,7 +231,7 @@ const AccountingPeriodsPage = () => {
               </div>
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -242,7 +242,7 @@ const AccountingPeriodsPage = () => {
               </SelectContent>
             </Select>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
               <SelectContent>
@@ -256,86 +256,66 @@ const AccountingPeriodsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Periods List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Accounting Periods ({filteredPeriods.length})</CardTitle>
-          <CardDescription>
-            Manage your accounting periods and their status
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredPeriods.map((period) => (
-              <div
-                key={period.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
-                    <Calendar className="h-5 w-5 text-primary" />
+      {/* Periods Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredPeriods.length > 0 ? (
+          filteredPeriods.map((period) => (
+            <Card key={period.id} className="flex flex-col">
+              <CardHeader>
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <CardTitle className="text-base">{period.name}</CardTitle>
+                    <CardDescription className="pt-1">
+                      FY {period.fiscalYear} - Period {period.periodNumber}
+                    </CardDescription>
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{period.name}</p>
-                      {getStatusBadge(period.status)}
-                      {getTypeBadge(period.type)}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      FY {period.fiscalYear} - Period {period.periodNumber} | 
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => { setSelectedPeriod(period); setEditPeriodOpen(true); }} className="gap-2">
+                        <Edit className="h-4 w-4" /> Edit Period
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => { setSelectedPeriod(period); setDeletePeriodOpen(true); }} className="gap-2 text-destructive focus:text-destructive">
+                        <Trash2 className="h-4 w-4" /> Delete Period
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-grow space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {getStatusBadge(period.status)}
+                  {getTypeBadge(period.type)}
+                </div>
+                <div className="text-sm text-muted-foreground border-t pt-3">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>
                       {new Date(period.startDate).toLocaleDateString()} - {new Date(period.endDate).toLocaleDateString()}
-                    </p>
+                    </span>
                   </div>
                 </div>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedPeriod(period)
-                        setEditPeriodOpen(true)
-                      }}
-                      className="gap-2"
-                    >
-                      <Edit className="h-4 w-4" />
-                      Edit Period
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedPeriod(period)
-                        setDeletePeriodOpen(true)
-                      }}
-                      className="gap-2 text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete Period
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ))}
-
-            {filteredPeriods.length === 0 && (
-              <div className="text-center py-12">
-                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No accounting periods found</h3>
-                <p className="text-muted-foreground">
-                  {searchTerm || statusFilter !== "all" || typeFilter !== "all"
-                    ? "Try adjusting your filters"
-                    : "Get started by adding your first accounting period"}
-                </p>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="md:col-span-2 xl:col-span-3 text-center py-16 border-2 border-dashed rounded-lg">
+            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium">No accounting periods found</h3>
+            <p className="text-muted-foreground">
+              {searchTerm || statusFilter !== "all" || typeFilter !== "all"
+                ? "Try adjusting your filters"
+                : "Get started by adding your first accounting period"}
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       {/* Modals */}
       <CreateAccountingPeriodModal

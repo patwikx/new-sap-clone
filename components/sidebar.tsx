@@ -27,6 +27,9 @@ import {
   Archive,
   Calendar,
   Computer,
+  PackageOpen,
+  ListCheckIcon,
+  FileType,
 } from "lucide-react"
 import UserProfileLogout from "./user-profile-logout"
 import BusinessUnitSwitcher from "./business-unit-switcher"
@@ -113,6 +116,10 @@ const navigation: NavItem[] = [
       { title: "Business Units", href: "/admin/business-units", icon: Building2 },
       { title: "Numbering Series", href: "/admin/numbering-series", icon: FileText },
       { title: "Accounting Periods", href: "/admin/accounting-periods", icon: Calendar },
+       { title: "Payment Methods", href: "/admin/payment-methods", icon: CreditCard },
+       { title: "Unit of Measure", href: "/admin/uoms", icon: PackageOpen },
+          { title: "Inventory Category", href: "/admin/inventory-categories", icon: FileText },
+             { title: "Tax Codes", href: "/admin/tax-codes", icon: FileType },
     ],
   },
 ]

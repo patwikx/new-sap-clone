@@ -12,8 +12,8 @@ import { ModalProvider } from '@/components/modal-provider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'RDHFSI E-Commerce System',
-  description: 'E-Commerce',
+  title: 'PLM Acctg Solutions, Inc.',
+  description: 'Accounting System',
 }
 
 export default async function RootLayout({

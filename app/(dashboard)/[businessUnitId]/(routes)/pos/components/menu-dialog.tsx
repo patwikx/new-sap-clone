@@ -181,7 +181,7 @@ export const MenuDialog = ({
             </DialogHeader>
 
             {/* Search and Categories - More compact */}
-            <div className="p-4 space-y-3 border-b bg-gray-50">
+            <div className="p-4 space-y-3 border-b">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -262,7 +262,7 @@ export const MenuDialog = ({
           </div>
 
           {/* Order Summary Section - Improved */}
-          <div className="w-80 bg-white border-l flex flex-col">
+          <div className="w-80 border-l flex flex-col">
             <div className="p-4 bg-gray-50 border-b">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold flex items-center gap-2">
@@ -332,7 +332,7 @@ export const MenuDialog = ({
             </ScrollArea>
 
             {/* Order Totals and Actions - Improved */}
-            <div className="p-4 bg-gray-50 border-t space-y-4">
+            <div className="p-4 border-t space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal:</span>

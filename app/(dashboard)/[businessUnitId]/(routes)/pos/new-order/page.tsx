@@ -300,7 +300,7 @@ export default function NewOrderPage() {
   }
 
   return (
-    <div className="h-screen w-full px-6 py-4 bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="h-screen w-full px-6 py-4 flex flex-col">
       {/* Page Header with Breadcrumbs - Compact */}
       <div className="space-y-2 mb-4 flex-shrink-0">
         {/* Breadcrumbs */}

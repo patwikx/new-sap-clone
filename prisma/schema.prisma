@@ -892,40 +892,43 @@ model AccountGroup {
 }
 
 model GlAccount {
-  id                 String              @id @default(uuid())
-  accountCode        String
-  name               String
-  description        String?
-  balance            Decimal             @default(0) @db.Decimal(19, 4)
-  accountTypeId      String
-  accountType        AccountType         @relation(fields: [accountTypeId], references: [id])
-  businessUnitId     String
-  businessUnit       BusinessUnit        @relation(fields: [businessUnitId], references: [id], onDelete: Cascade)
-  parentAccountId    String?
-  parentAccount      GlAccount?          @relation("GlAccountHierarchy", fields: [parentAccountId], references: [id])
-  childAccounts      GlAccount[]         @relation("GlAccountHierarchy")
-  isControlAccount   Boolean             @default(false)
-  currency           String?
-  isActive           Boolean             @default(true)
-  notes              String?
-  normalBalance      NormalBalance?
-  accountCategoryId  String?
-  accountCategory    AccountCategory?    @relation(fields: [accountCategoryId], references: [id])
-  accountGroupId     String?
-  accountGroup       AccountGroup?       @relation(fields: [accountGroupId], references: [id])
-  cashFlowCategory   CashFlowCategory?
-  createdById        String?
-  createdBy          User?               @relation("GlAccountCreatedBy", fields: [createdById], references: [id])
-  updatedById        String?
-  updatedBy          User?               @relation("GlAccountUpdatedBy", fields: [updatedById], references: [id])
-  journalLines       JournalEntryLine[]
-  arInvoiceItems     ARInvoiceItem[]
-  apInvoiceItems     APInvoiceItem[]
-  purchaseOrderItems PurchaseOrderItem[]
-  bankAccount        BankAccount?
-  budgetLines        BudgetLine[]        @relation("GlAccountToBudgetLines")
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  id                   String              @id @default(uuid())
+  accountCode          String
+  name                 String
+  description          String?
+  balance              Decimal             @default(0) @db.Decimal(19, 4)
+  accountTypeId        String
+  accountType          AccountType         @relation(fields: [accountTypeId], references: [id])
+  businessUnitId       String
+  businessUnit         BusinessUnit        @relation(fields: [businessUnitId], references: [id], onDelete: Cascade)
+  parentAccountId      String?
+  parentAccount        GlAccount?          @relation("GlAccountHierarchy", fields: [parentAccountId], references: [id])
+  childAccounts        GlAccount[]         @relation("GlAccountHierarchy")
+  paymentMethods       PaymentMethod[]
+  isControlAccount     Boolean             @default(false)
+  currency             String?
+  isActive             Boolean             @default(true)
+  notes                String?
+  normalBalance        NormalBalance?
+  accountCategoryId    String?
+  accountCategory      AccountCategory?    @relation(fields: [accountCategoryId], references: [id])
+  accountGroupId       String?
+  accountGroup         AccountGroup?       @relation(fields: [accountGroupId], references: [id])
+  cashFlowCategory     CashFlowCategory?
+  createdById          String?
+  createdBy            User?               @relation("GlAccountCreatedBy", fields: [createdById], references: [id])
+  updatedById          String?
+  updatedBy            User?               @relation("GlAccountUpdatedBy", fields: [updatedById], references: [id])
+  menuItemSalesAccount MenuItem[]          @relation("MenuItemSalesAccount")
+  menuItemCogsAccount  MenuItem[]          @relation("MenuItemCogsAccount")
+  journalLines         JournalEntryLine[]
+  arInvoiceItems       ARInvoiceItem[]
+  apInvoiceItems       APInvoiceItem[]
+  purchaseOrderItems   PurchaseOrderItem[]
+  bankAccount          BankAccount?
+  budgetLines          BudgetLine[]        @relation("GlAccountToBudgetLines")
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
 
   @@unique([businessUnitId, accountCode]) // per-BU uniqueness
 }
@@ -1432,10 +1435,15 @@ model MenuItem {
   modifierGroups      ModifierGroup[]
   categoryId          String
   category            MenuCategory         @relation(fields: [categoryId], references: [id])
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  createdById         String?
-  createdBy           User?                @relation("MenuItemCreatedBy", fields: [createdById], references: [id])
+  salesGlAccountId    String?
+  salesGlAccount      GlAccount?           @relation("MenuItemSalesAccount", fields: [salesGlAccountId], references: [id])
+
+  cogsGlAccountId String?
+  cogsGlAccount   GlAccount? @relation("MenuItemCogsAccount", fields: [cogsGlAccountId], references: [id])
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  createdById     String?
+  createdBy       User?      @relation("MenuItemCreatedBy", fields: [createdById], references: [id])
 }
 
 model MenuCategory {
@@ -1670,6 +1678,8 @@ model PaymentMethod {
   createdAt        DateTime          @default(now())
   createdById      String?
   createdBy        User?             @relation("PaymentMethodCreatedBy", fields: [createdById], references: [id])
+  glAccountId      String?
+  glAccount        GlAccount?        @relation(fields: [glAccountId], references: [id])
   incomingPayments IncomingPayment[]
 }
 
