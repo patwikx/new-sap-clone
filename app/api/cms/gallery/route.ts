@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { title, description, imageUrl, category, tags, isActive, sortOrder } = body
+    const { title, description, imageUrl, category, isActive, sortOrder } = body
 
     if (!imageUrl || !category) {
       return new NextResponse("Missing required fields: imageUrl and category", { status: 400 })
@@ -67,7 +67,6 @@ export async function POST(req: NextRequest) {
         description,
         imageUrl,
         category,
-        tags: tags ?? [],
         isActive: isActive ?? true,
         sortOrder: sortOrder ?? 1,
         createdById: session.user.id,
