@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@prisma/client"
+import { PosAccountingService } from "@/lib/services/pos-accounting-service"
 
 interface SettlementInput {
   orderId: string
@@ -11,7 +12,7 @@ interface SettlementInput {
   discountAmount?: number
 }
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ businessUnitId: string }> }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ businessUnitId:string }> }) {
   try {
     const session = await auth()
     if (!session?.user) {
@@ -130,10 +131,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bus
       shiftId = activeShift.id
     }
 
-    // Calculate totals - since OrderItem doesn't have lineTotal, calculate from priceAtSale * quantity
+    // Calculate totals
     const subtotal = order.items.reduce((sum, item) => {
       const itemTotal = Number.parseFloat(item.priceAtSale.toString()) * item.quantity
-      // Add modifier costs
       const modifierTotal = item.modifiers.reduce((modSum, modifier) => {
         return modSum + Number.parseFloat(modifier.priceChange.toString()) * item.quantity
       }, 0)
@@ -165,7 +165,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bus
     }
 
     const settlement = await prisma.$transaction(async (tx) => {
-      // Create payment record using the existing Payment model
+      // 1. Create payment record
       const payment = await tx.payment.create({
         data: {
           orderId,
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bus
         },
       })
 
-      // Update order status and totals
+      // 2. Update order status and totals
       await tx.order.update({
         where: { id: orderId },
         data: {
@@ -185,19 +185,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bus
           paidAt: new Date(),
           amountPaid: new Prisma.Decimal(amountReceived),
           isPaid: true,
-          // Update calculated totals
           subTotal: new Prisma.Decimal(subtotal),
           tax: new Prisma.Decimal(tax),
           totalAmount: new Prisma.Decimal(finalTotal),
-          // Apply discount if provided
           ...(discountId && { discountId }),
           ...(discount > 0 && { discountValue: new Prisma.Decimal(discount) }),
-          // Update shift if it was missing
           ...(order.shiftId !== shiftId && { shiftId }),
         },
       })
 
-      // Free up the table by setting status to AVAILABLE
+      // 3. Free up the table
       if (order.tableId) {
         await tx.table.update({
           where: { id: order.tableId },
@@ -207,17 +204,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bus
         })
       }
 
-      // Create inventory movements for sold items (depletion) - only if recipe exists
+      // 4. Create inventory movements for sold items (depletion)
       for (const item of order.items) {
         if (item.menuItem.recipe) {
           const recipe = item.menuItem.recipe
           for (const recipeItem of recipe.recipeItems) {
             const quantityToDeplete = Number.parseFloat(recipeItem.quantityUsed.toString()) * item.quantity
-
-            // Find stock level (assuming first available location for simplicity)
             const stockLevel = recipeItem.inventoryItem.stockLevels[0]
             if (stockLevel) {
-              // Update stock level
               await tx.inventoryStock.update({
                 where: { id: stockLevel.id },
                 data: {
@@ -226,13 +220,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bus
                   },
                 },
               })
-
-              // Create inventory movement record
               await tx.inventoryMovement.create({
                 data: {
                   inventoryStockId: stockLevel.id,
                   type: "SALE_DEPLETION",
-                  quantity: new Prisma.Decimal(-quantityToDeplete), // Negative for depletion
+                  quantity: new Prisma.Decimal(-quantityToDeplete),
                   reason: `Sale - Order ${order.id}`,
                   orderId: order.id,
                   createdById: session.user.id!,
@@ -243,6 +235,76 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bus
         }
       }
 
+      // 5. Check if auto-posting to GL is enabled
+      const posConfig = await tx.posConfiguration.findUnique({
+        where: { businessUnitId },
+      })
+
+      if (posConfig?.autoPostToGl) {
+        const updatedOrderForGL = await tx.order.findUnique({
+          where: { id: orderId },
+          // ✅ FIX: Added all includes to match the 'OrderWithDetails' type
+          include: {
+            businessUnit: true,
+            businessPartner: true,
+            items: {
+              include: {
+                menuItem: {
+                  include: {
+                    glMapping: {
+                      include: {
+                        salesAccount: true,
+                        cogsAccount: true,
+                        inventoryAccount: true,
+                      },
+                    },
+                    recipe: {
+                      include: {
+                        recipeItems: {
+                          include: {
+                            inventoryItem: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            payments: {
+              include: {
+                paymentMethod: {
+                  include: {
+                    glMappings: {
+                      include: {
+                        glAccount: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            discount: {
+              include: {
+                glAccount: true,
+              },
+            },
+          },
+        })
+
+        if (updatedOrderForGL) {
+          try {
+            // ✅ FIX: Pass the transaction client 'tx' as the second argument
+            await PosAccountingService.postOrderToGl(updatedOrderForGL, tx)
+            console.log("[POS_SETTLEMENTS_POST] Order automatically posted to GL")
+          } catch (glError) {
+            console.error("[POS_SETTLEMENTS_POST] Failed to auto-post to GL:", glError)
+            console.error("Payment completed but failed to post to GL automatically. Manual posting required.")
+          }
+        }
+      }
+
+      // 6. Return the final settlement details
       return {
         payment,
         order: {
