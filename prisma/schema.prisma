@@ -477,6 +477,23 @@ model User {
   hotelStaffProfile           HotelStaff?          @relation("HotelStaffUser")
   createdRoomRates            RoomRate[]           @relation("RoomRateCreatedBy")
   createdHotelServices        HotelService[]       @relation("HotelServiceCreatedBy")
+
+  createdHeroSections HeroSection[] @relation("HeroSectionCreatedBy")
+  updatedHeroSections HeroSection[] @relation("HeroSectionUpdatedBy")
+
+  createdFeatures Feature[] @relation("FeatureCreatedBy")
+  updatedFeatures Feature[] @relation("FeatureUpdatedBy")
+
+  updatedGalleryImages GalleryImage[] @relation("GalleryImageUpdatedBy")
+  updatedAmenities     Amenity[]      @relation("AmenityUpdatedBy")
+
+  createdContactInfos ContactInfo[] @relation("ContactInfoCreatedBy")
+  updatedContactInfos ContactInfo[] @relation("ContactInfoUpdatedBy")
+  createdFAQs         FAQ[]         @relation("FAQCreatedBy")
+  updatedFAQs         FAQ[]         @relation("FAQUpdatedBy")
+
+  createdPageContents PageContent[] @relation("PageContentCreatedBy")
+  updatedPageContents PageContent[] @relation("PageContentUpdatedBy")
 }
 
 model Roles {
@@ -2215,15 +2232,20 @@ model GalleryImage {
   description String?
   imageUrl    String
   category    String? // e.g., "accommodations", "activities", "dining", "resort"
-  tags        String[] // Array of tags for filtering
+  tags        String[]
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdById String?
-  createdBy   User?    @relation("GalleryImageCreatedBy", fields: [createdById], references: [id])
 
-  @@index([category, isActive])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String?
+  createdBy   User?   @relation("GalleryImageCreatedBy", fields: [createdById], references: [id])
+
+  updatedById String?
+  updatedBy   User?   @relation("GalleryImageUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([category, isActive, sortOrder])
 }
 
 model Booking {
@@ -2285,6 +2307,7 @@ model Testimonial {
   rating      Int? // 1-5 stars
   imageUrl    String? // Guest photo
   isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
   isFeatured  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -2330,19 +2353,24 @@ model TeamMember {
 }
 
 model Amenity {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   description String?
-  icon        String? // Icon name or URL
-  category    String? // e.g., "room", "resort", "wellness"
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdById String?
-  createdBy   User?    @relation("AmenityCreatedBy", fields: [createdById], references: [id])
+  icon        String?
+  category    String?
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0)
 
-  @@index([category, isActive])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String?
+  createdBy   User?   @relation("AmenityCreatedBy", fields: [createdById], references: [id])
+
+  updatedById String?
+  updatedBy   User?   @relation("AmenityUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([category, isActive, sortOrder])
 }
 
 // -----------------------------
@@ -2870,4 +2898,116 @@ model HotelService {
 
   @@unique([businessUnitId, name])
   @@index([businessUnitId, category, isActive])
+}
+
+model HeroSection {
+  id                 String  @id @default(uuid())
+  title              String
+  subtitle           String
+  backgroundImageUrl String
+  ctaText            String
+  ctaLink            String
+  isActive           Boolean @default(true)
+  sortOrder          Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String?
+  // Add a unique relation name here
+  createdBy   User?   @relation("HeroSectionCreatedBy", fields: [createdById], references: [id])
+
+  updatedById String?
+  // Add a different unique relation name here
+  updatedBy   User?   @relation("HeroSectionUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([isActive, sortOrder])
+}
+
+model Feature {
+  id          String  @id @default(uuid())
+  title       String
+  description String
+  iconName    String // Storing the name of the icon, e.g., "wifi", "pool"
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String?
+  createdBy   User?   @relation("FeatureCreatedBy", fields: [createdById], references: [id])
+
+  updatedById String?
+  updatedBy   User?   @relation("FeatureUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([isActive, sortOrder])
+}
+
+enum ContactType {
+  PHONE
+  EMAIL
+  ADDRESS
+  SOCIAL
+}
+
+model ContactInfo {
+  id        String      @id @default(uuid())
+  type      ContactType
+  label     String
+  value     String
+  iconName  String
+  isActive  Boolean     @default(true)
+  sortOrder Int         @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String?
+  createdBy   User?   @relation("ContactInfoCreatedBy", fields: [createdById], references: [id])
+
+  updatedById String?
+  updatedBy   User?   @relation("ContactInfoUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([isActive, sortOrder])
+}
+
+model FAQ {
+  id        String  @id @default(uuid())
+  question  String
+  answer    String
+  category  String
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String?
+  createdBy   User?   @relation("FAQCreatedBy", fields: [createdById], references: [id])
+
+  updatedById String?
+  updatedBy   User?   @relation("FAQUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([category, isActive, sortOrder])
+}
+
+model PageContent {
+  id       String  @id @default(uuid())
+  section  String // e.g., "about-us", "footer-contact"
+  key      String // e.g., "title", "description", "imageUrl"
+  value    String
+  type     String  @default("text") // "text", "html", "image", "json"
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String?
+  createdBy   User?   @relation("PageContentCreatedBy", fields: [createdById], references: [id])
+  updatedById String?
+  updatedBy   User?   @relation("PageContentUpdatedBy", fields: [updatedById], references: [id])
+
+  @@unique([section, key])
+  @@index([section, isActive])
 }
