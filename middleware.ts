@@ -12,7 +12,7 @@ export default auth((req) => {
   const isAuthRoute = nextUrl.pathname.startsWith("/auth");
   if (isAuthRoute) {
     if (isLoggedIn) {
-      return NextResponse.redirect(new URL("/", nextUrl));
+      return NextResponse.redirect(new URL("/setup", nextUrl));
     }
     return;
   }

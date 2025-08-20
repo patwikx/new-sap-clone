@@ -6,18 +6,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
-  Globe, 
-  Image, 
-  Star, 
-  MessageSquare, 
-  MapPin, 
+import {
+  Globe,
+  ImageIcon,
+  Star,
+  MessageSquare,
+  MapPin,
   Settings,
   Eye,
   Edit,
   Plus,
   Trash2,
-  MoreHorizontal
+  MoreHorizontal,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -30,10 +30,13 @@ import {
 import { toast } from "sonner"
 import axios from "axios"
 import { useCurrentUser } from "@/lib/current-user"
-
-import { AlertModal } from "@/components/modals/alert-modal"
 import { CreateHeroSectionModal } from "./components/create-hero-section-modal"
 import { CreateFeatureModal } from "./components/create-feature-modal"
+import { CreateTestimonialModal } from "./components/create-testimonial-modal"
+import { CreateGalleryModal } from "./components/create-gallery-modal"
+import { CreateAmenityModal } from "./components/create-amenity-modal"
+import { CreateContactModal } from "./components/create-contact-modal"
+import { CreateFAQModal } from "./components/create-faq-modal"
 
 interface HeroSection {
   id: string
@@ -111,7 +114,7 @@ const CMSPage = () => {
   const user = useCurrentUser()
 
   // Check authorization
-  const isAuthorized = user?.role?.role === 'Admin'
+  const isAuthorized = user?.role?.role === "Admin"
 
   // State management
   const [heroSections, setHeroSections] = useState<HeroSection[]>([])
@@ -148,49 +151,37 @@ const CMSPage = () => {
   const fetchCMSData = async () => {
     try {
       setLoading(true)
-      const [
-        heroRes,
-        featuresRes,
-     //   testimonialsRes,
-  //      galleryRes,
-     //   amenitiesRes,
-     //   contactRes,
-     //   faqsRes
-      ] = await Promise.all([
+      const [heroRes, featuresRes, testimonialsRes, galleryRes, amenitiesRes, contactRes, faqsRes] = await Promise.all([
         axios.get(`/api/cms/hero-sections`, {
-          headers: { 'x-business-unit-id': businessUnitId }
+          headers: { "x-business-unit-id": businessUnitId },
         }),
         axios.get(`/api/cms/features`, {
-          headers: { 'x-business-unit-id': businessUnitId }
+          headers: { "x-business-unit-id": businessUnitId },
         }),
-
-{/*
-        axios.get(`/api/${businessUnitId}/cms/testimonials`, {
-          headers: { 'x-business-unit-id': businessUnitId }
+        axios.get(`/api/cms/testimonials`, {
+          headers: { "x-business-unit-id": businessUnitId },
         }),
-        axios.get(`/api/${businessUnitId}/cms/gallery`, {
-          headers: { 'x-business-unit-id': businessUnitId }
+        axios.get(`/api/cms/gallery`, {
+          headers: { "x-business-unit-id": businessUnitId },
         }),
-        axios.get(`/api/${businessUnitId}/cms/amenities`, {
-          headers: { 'x-business-unit-id': businessUnitId }
+        axios.get(`/api/cms/amenities`, {
+          headers: { "x-business-unit-id": businessUnitId },
         }),
-        axios.get(`/api/${businessUnitId}/cms/contact-info`, {
-          headers: { 'x-business-unit-id': businessUnitId }
+        axios.get(`/api/cms/contact-info`, {
+          headers: { "x-business-unit-id": businessUnitId },
         }),
-        axios.get(`/api/${businessUnitId}/cms/faqs`, {
-          headers: { 'x-business-unit-id': businessUnitId }
-        })
-*/}
-
+        axios.get(`/api/cms/faqs`, {
+          headers: { "x-business-unit-id": businessUnitId },
+        }),
       ])
 
       setHeroSections(heroRes.data)
       setFeatures(featuresRes.data)
-    //  setTestimonials(testimonialsRes.data)
-    //  setGalleryImages(galleryRes.data)
-    //  setAmenities(amenitiesRes.data)
-   //   setContactInfo(contactRes.data)
-   //   setFAQs(faqsRes.data)
+      setTestimonials(testimonialsRes.data)
+      setGalleryImages(galleryRes.data)
+      setAmenities(amenitiesRes.data)
+      setContactInfo(contactRes.data)
+      setFAQs(faqsRes.data)
     } catch (error) {
       toast.error("Failed to fetch CMS data")
       console.error(error)
@@ -210,7 +201,7 @@ const CMSPage = () => {
 
     try {
       await axios.delete(`/api/${businessUnitId}/cms/${deleteItem.type}/${deleteItem.id}`, {
-        headers: { 'x-business-unit-id': businessUnitId }
+        headers: { "x-business-unit-id": businessUnitId },
       })
       toast.success(`${deleteItem.name} deleted successfully`)
       setDeleteModalOpen(false)
@@ -223,9 +214,7 @@ const CMSPage = () => {
   }
 
   const getStatusBadge = (isActive: boolean) => (
-    <Badge variant={isActive ? "default" : "secondary"}>
-      {isActive ? "Active" : "Inactive"}
-    </Badge>
+    <Badge variant={isActive ? "default" : "secondary"}>{isActive ? "Active" : "Inactive"}</Badge>
   )
 
   if (!isAuthorized) {
@@ -252,13 +241,11 @@ const CMSPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Website Content Management</h1>
-          <p className="text-muted-foreground">
-            Manage your hotel website homepage content and settings
-          </p>
+          <p className="text-muted-foreground">Manage your hotel website homepage content and settings</p>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={() => window.open(`/api/public/cms/${businessUnitId}/homepage`, '_blank')}
+        <Button
+          variant="outline"
+          onClick={() => window.open(`/api/public/cms/${businessUnitId}/homepage`, "_blank")}
           className="gap-2"
         >
           <Eye className="h-4 w-4" />
@@ -298,7 +285,7 @@ const CMSPage = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Gallery</CardTitle>
-            <Image className="h-4 w-4 text-muted-foreground" />
+            <ImageIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{galleryImages.length}</div>
@@ -368,15 +355,20 @@ const CMSPage = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => { setSelectedHero(hero); setEditHeroOpen(true); }}>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedHero(hero)
+                            setEditHeroOpen(true)
+                          }}
+                        >
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          onClick={() => { 
-                            setDeleteItem({ type: 'hero-sections', id: hero.id, name: hero.title }); 
-                            setDeleteModalOpen(true); 
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setDeleteItem({ type: "hero-sections", id: hero.id, name: hero.title })
+                            setDeleteModalOpen(true)
                           }}
                           className="text-destructive"
                         >
@@ -390,8 +382,8 @@ const CMSPage = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <img 
-                      src={hero.backgroundImageUrl} 
+                    <img
+                      src={hero.backgroundImageUrl || "/placeholder.svg"}
                       alt={hero.title}
                       className="w-full h-32 object-cover rounded-md"
                     />
@@ -430,15 +422,20 @@ const CMSPage = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => { setSelectedFeature(feature); setEditFeatureOpen(true); }}>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedFeature(feature)
+                            setEditFeatureOpen(true)
+                          }}
+                        >
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          onClick={() => { 
-                            setDeleteItem({ type: 'features', id: feature.id, name: feature.title }); 
-                            setDeleteModalOpen(true); 
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setDeleteItem({ type: "features", id: feature.id, name: feature.title })
+                            setDeleteModalOpen(true)
                           }}
                           className="text-destructive"
                         >
@@ -487,15 +484,20 @@ const CMSPage = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => { setSelectedTestimonial(testimonial); setEditTestimonialOpen(true); }}>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedTestimonial(testimonial)
+                            setEditTestimonialOpen(true)
+                          }}
+                        >
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          onClick={() => { 
-                            setDeleteItem({ type: 'testimonials', id: testimonial.id, name: testimonial.customerName }); 
-                            setDeleteModalOpen(true); 
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setDeleteItem({ type: "testimonials", id: testimonial.id, name: testimonial.customerName })
+                            setDeleteModalOpen(true)
                           }}
                           className="text-destructive"
                         >
@@ -513,9 +515,9 @@ const CMSPage = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1">
                         {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            className={`h-3 w-3 ${i < testimonial.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                          <Star
+                            key={i}
+                            className={`h-3 w-3 ${i < testimonial.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
                           />
                         ))}
                       </div>
@@ -542,8 +544,8 @@ const CMSPage = () => {
               <Card key={image.id}>
                 <CardContent className="p-4">
                   <div className="space-y-2">
-                    <img 
-                      src={image.imageUrl} 
+                    <img
+                      src={image.imageUrl || "/placeholder.svg"}
                       alt={image.title}
                       className="w-full h-32 object-cover rounded-md"
                     />
@@ -556,10 +558,10 @@ const CMSPage = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem 
-                            onClick={() => { 
-                              setDeleteItem({ type: 'gallery', id: image.id, name: image.title }); 
-                              setDeleteModalOpen(true); 
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setDeleteItem({ type: "gallery", id: image.id, name: image.title })
+                              setDeleteModalOpen(true)
                             }}
                             className="text-destructive"
                           >
@@ -570,7 +572,9 @@ const CMSPage = () => {
                       </DropdownMenu>
                     </div>
                     <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-xs">{image.category}</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {image.category}
+                      </Badge>
                       {getStatusBadge(image.isActive)}
                     </div>
                   </div>
@@ -602,10 +606,10 @@ const CMSPage = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem 
-                          onClick={() => { 
-                            setDeleteItem({ type: 'amenities', id: amenity.id, name: amenity.name }); 
-                            setDeleteModalOpen(true); 
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setDeleteItem({ type: "amenities", id: amenity.id, name: amenity.name })
+                            setDeleteModalOpen(true)
                           }}
                           className="text-destructive"
                         >
@@ -620,7 +624,9 @@ const CMSPage = () => {
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">{amenity.description}</p>
                     <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-xs">{amenity.category}</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {amenity.category}
+                      </Badge>
                       {getStatusBadge(amenity.isActive)}
                     </div>
                     <p className="text-xs text-muted-foreground">Icon: {amenity.iconName}</p>
@@ -653,10 +659,10 @@ const CMSPage = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem 
-                          onClick={() => { 
-                            setDeleteItem({ type: 'contact-info', id: contact.id, name: contact.label }); 
-                            setDeleteModalOpen(true); 
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setDeleteItem({ type: "contact-info", id: contact.id, name: contact.label })
+                            setDeleteModalOpen(true)
                           }}
                           className="text-destructive"
                         >
@@ -671,7 +677,9 @@ const CMSPage = () => {
                   <div className="space-y-2">
                     <p className="text-sm">{contact.value}</p>
                     <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-xs">{contact.type}</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {contact.type}
+                      </Badge>
                       {getStatusBadge(contact.isActive)}
                     </div>
                   </div>
@@ -703,10 +711,10 @@ const CMSPage = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem 
-                          onClick={() => { 
-                            setDeleteItem({ type: 'faqs', id: faq.id, name: faq.question }); 
-                            setDeleteModalOpen(true); 
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setDeleteItem({ type: "faqs", id: faq.id, name: faq.question })
+                            setDeleteModalOpen(true)
                           }}
                           className="text-destructive"
                         >
@@ -721,7 +729,9 @@ const CMSPage = () => {
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground line-clamp-3">{faq.answer}</p>
                     <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-xs">{faq.category}</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {faq.category}
+                      </Badge>
                       {getStatusBadge(faq.isActive)}
                     </div>
                   </div>
@@ -752,7 +762,7 @@ const CMSPage = () => {
         }}
         businessUnitId={businessUnitId}
       />
-{/*
+
       <CreateTestimonialModal
         isOpen={createTestimonialOpen}
         onClose={() => setCreateTestimonialOpen(false)}
@@ -763,7 +773,7 @@ const CMSPage = () => {
         businessUnitId={businessUnitId}
       />
 
-      <CreateGalleryImageModal
+      <CreateGalleryModal
         isOpen={createGalleryOpen}
         onClose={() => setCreateGalleryOpen(false)}
         onSuccess={() => {
@@ -783,7 +793,7 @@ const CMSPage = () => {
         businessUnitId={businessUnitId}
       />
 
-      <CreateContactInfoModal
+      <CreateContactModal
         isOpen={createContactOpen}
         onClose={() => setCreateContactOpen(false)}
         onSuccess={() => {
@@ -801,64 +811,6 @@ const CMSPage = () => {
           setCreateFAQOpen(false)
         }}
         businessUnitId={businessUnitId}
-      />
-      */}
-
-      {/* Edit Modals 
-      <EditHeroSectionModal
-        isOpen={editHeroOpen}
-        onClose={() => {
-          setEditHeroOpen(false)
-          setSelectedHero(null)
-        }}
-        onSuccess={() => {
-          fetchCMSData()
-          setEditHeroOpen(false)
-          setSelectedHero(null)
-        }}
-        heroSection={selectedHero}
-        businessUnitId={businessUnitId}
-      />
-
-      <EditFeatureModal
-        isOpen={editFeatureOpen}
-        onClose={() => {
-          setEditFeatureOpen(false)
-          setSelectedFeature(null)
-        }}
-        onSuccess={() => {
-          fetchCMSData()
-          setEditFeatureOpen(false)
-          setSelectedFeature(null)
-        }}
-        feature={selectedFeature}
-        businessUnitId={businessUnitId}
-      />
-
-      <EditTestimonialModal
-        isOpen={editTestimonialOpen}
-        onClose={() => {
-          setEditTestimonialOpen(false)
-          setSelectedTestimonial(null)
-        }}
-        onSuccess={() => {
-          fetchCMSData()
-          setEditTestimonialOpen(false)
-          setSelectedTestimonial(null)
-        }}
-        testimonial={selectedTestimonial}
-        businessUnitId={businessUnitId}
-      />
-      */}
-
-      <AlertModal
-        isOpen={deleteModalOpen}
-        onClose={() => {
-          setDeleteModalOpen(false)
-          setDeleteItem(null)
-        }}
-        onConfirm={handleDelete}
-        loading={false}
       />
     </div>
   )

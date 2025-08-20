@@ -67,7 +67,7 @@ export const LoginForm = () => {
         setError(data.error);
       } else if (data.success) {
         // On successful login, redirect to the dashboard or home page
-        window.location.assign("/"); 
+        window.location.assign("/setup"); 
       }
     } catch (error) {
       setError(`An unexpected error occurred. Please try again. ${error}`);
