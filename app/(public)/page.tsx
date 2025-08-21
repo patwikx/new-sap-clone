@@ -42,15 +42,11 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen">
       {/* Hero Section */}
-      {data.heroSections?.length > 0 && <HeroSection heroSections={data.heroSections} />}
+      {data.heroSections?.length > 0 && <HeroSection />}
 
- 
-
-      {/* Accommodations Section */}
-      {data.accommodations?.length > 0 && <AccommodationsSection accommodations={data.accommodations} />}
 
            {/* Features Section */}
-      {data.features?.length > 0 && <FeaturesSection features={data.features} />}
+      {data.features?.length > 0 && <FeaturesSection />}
 
       {/* Amenities Section */}
       <AmenitiesSection />

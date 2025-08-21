@@ -9,43 +9,80 @@ import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import Image from "next/image"
 
-const navigationItems = [
-  { name: "Home", href: "/" },
-  {
-    name: "Accommodations",
-    href: "#accommodations",
-    submenu: [
-      { name: "Deluxe Rooms", href: "#accommodations" },
-      { name: "Suites", href: "#accommodations" },
-      { name: "Presidential Suite", href: "#accommodations" },
-    ],
-  },
-  {
-    name: "Amenities",
-    href: "#amenities",
-    submenu: [
-      { name: "Spa & Wellness", href: "#amenities" },
-      { name: "Dining", href: "#amenities" },
-      { name: "Recreation", href: "#amenities" },
-    ],
-  },
-  {
-    name: "Services",
-    href: "#services",
-    submenu: [
-      { name: "Concierge", href: "#services" },
-      { name: "Room Service", href: "#services" },
-      { name: "Business Center", href: "#services" },
-    ],
-  },
-  { name: "Gallery", href: "#gallery" },
-  { name: "Contact", href: "#contact" },
-]
+interface Hotel {
+  id: string
+  name: string
+  location: string | null
+  accommodations: Array<{
+    id: string
+    name: string
+    type: string
+  }>
+}
 
 export function PublicHeader() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const [hotels, setHotels] = useState<Hotel[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchHotels = async () => {
+      try {
+        const response = await fetch("/api/hotels")
+        if (response.ok) {
+          const data = await response.json()
+          setHotels(data)
+        }
+      } catch (error) {
+        console.error("Error fetching hotels:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchHotels()
+  }, [])
+
+  const navigationItems = [
+    { name: "Home", href: "/" },
+    {
+      name: "Our Hotels",
+      href: "#hotels",
+      submenu: hotels.map((hotel) => ({
+        name: hotel.name,
+        href: `/property/${hotel.id}`,
+        location: hotel.location,
+      })),
+    },
+    {
+      name: "Accommodations",
+      href: "#accommodations",
+      submenu: loading
+        ? []
+        : hotels
+            .flatMap((hotel) =>
+              hotel.accommodations.slice(0, 2).map((room) => ({
+                name: `${room.name} - ${hotel.name}`,
+                href: `/property/${hotel.id}/rooms/${room.id}`,
+              })),
+            )
+            .slice(0, 6),
+    },
+    {
+      name: "Services",
+      href: "#services",
+      submenu: [
+        { name: "Concierge", href: "#services" },
+        { name: "Room Service", href: "#services" },
+        { name: "Spa & Wellness", href: "#services" },
+        { name: "Business Center", href: "#services" },
+      ],
+    },
+    { name: "Gallery", href: "#gallery" },
+    { name: "Contact", href: "#contact" },
+  ]
 
   useEffect(() => {
     const handleScroll = () => {
@@ -91,7 +128,7 @@ export function PublicHeader() {
             </div>
             <div className="flex items-center gap-2 text-xs opacity-90">
               <MapPin className="h-3 w-3" />
-              <span>Cagampang Ext. Brgy. Bula, General Santos City</span>
+              <span>Luxury Hotel Chain • 4 Premium Locations</span>
             </div>
           </div>
         </div>
@@ -101,7 +138,12 @@ export function PublicHeader() {
         <div className="flex items-center justify-between py-4">
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="relative">
-              <Image src="https://uwo3lp7kc6.ufs.sh/f/p7a48sEgH7hx0MDfBoHIAEuzgCDLmFQic5Tb2deM3lvkfZPn" height={40} width={40} alt="TWC Logo" />
+              <Image
+                src="https://uwo3lp7kc6.ufs.sh/f/p7a48sEgH7hx0MDfBoHIAEuzgCDLmFQic5Tb2deM3lvkfZPn"
+                height={40}
+                width={40}
+                alt="TWC Logo"
+              />
             </div>
             <div className="flex flex-col">
               <span className="text-xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors font-serif">
@@ -114,21 +156,21 @@ export function PublicHeader() {
           <nav className="hidden lg:flex items-center space-x-8">
             {navigationItems.map((item) => (
               <div key={item.name} className="relative group">
-                {item.submenu ? (
+                {item.submenu && item.submenu.length > 0 ? (
                   <>
                     <button className="flex items-center gap-1 text-gray-700 hover:text-amber-600 transition-colors font-medium text-sm py-2">
                       {item.name}
                       <ChevronDown className="h-3 w-3 transition-transform group-hover:rotate-180" />
                     </button>
-                    {/* Dropdown */}
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2">
+                    <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2">
                       {item.submenu.map((subItem) => (
                         <Link
                           key={subItem.name}
                           href={subItem.href}
-                          className="block px-4 py-2 text-sm text-gray-600 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                          className="block px-4 py-3 text-sm text-gray-600 hover:text-amber-600 hover:bg-amber-50 transition-colors"
                         >
-                          {subItem.name}
+                          <div className="font-medium">{subItem.name}</div>
+                          {subItem.name && <div className="text-xs text-gray-400 mt-1">{subItem.name}</div>}
                         </Link>
                       ))}
                     </div>
@@ -166,7 +208,7 @@ export function PublicHeader() {
                   <SheetTitle className="text-left">
                     <div className="flex items-center space-x-3">
                       <div className="w-7 h-7 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">L</span>
+                        <span className="text-white font-bold text-sm">T</span>
                       </div>
                       <div className="flex flex-col">
                         <span className="text-lg font-bold text-gray-900 font-serif">Tropicana</span>
@@ -182,11 +224,11 @@ export function PublicHeader() {
                     <div className="space-y-3 p-4 bg-amber-50 rounded-xl border border-amber-100">
                       <div className="flex items-center gap-3 text-sm text-gray-600">
                         <Phone className="h-4 w-4 text-amber-600" />
-                        <span>+1 (555) 123-4567</span>
+                        <span>+63 552-6517</span>
                       </div>
                       <div className="flex items-center gap-3 text-sm text-gray-600">
                         <Mail className="h-4 w-4 text-amber-600" />
-                        <span>info@luxuryhotel.com</span>
+                        <span>info@doloreshotels.com.ph</span>
                       </div>
                     </div>
 
@@ -199,9 +241,11 @@ export function PublicHeader() {
                             className="flex items-center justify-between p-3 rounded-lg hover:bg-amber-50 transition-colors group"
                           >
                             <span className="font-medium text-gray-700 group-hover:text-amber-600">{item.name}</span>
-                            {item.submenu && <ChevronDown className="h-4 w-4 text-gray-400" />}
+                            {item.submenu && item.submenu.length > 0 && (
+                              <ChevronDown className="h-4 w-4 text-gray-400" />
+                            )}
                           </Link>
-                          {item.submenu && (
+                          {item.submenu && item.submenu.length > 0 && (
                             <div className="ml-4 mt-1 space-y-1">
                               {item.submenu.map((subItem) => (
                                 <Link
@@ -209,7 +253,8 @@ export function PublicHeader() {
                                   href={subItem.href}
                                   className="block p-2 text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
                                 >
-                                  {subItem.name}
+                                  <div>{subItem.name}</div>
+                                  {subItem.name && <div className="text-xs text-gray-400">{subItem.name}</div>}
                                 </Link>
                               ))}
                             </div>

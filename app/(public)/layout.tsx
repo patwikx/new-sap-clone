@@ -29,7 +29,7 @@ export default function PublicLayout({
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable} antialiased`}>
       {/* Fixed hydration error by using concrete background color instead of CSS custom property */}
-      <body className="min-h-screen" suppressHydrationWarning>
+      <body className="min-h-screen mt-16" suppressHydrationWarning>
         <PublicHeader />
         {children}
         <PublicFooter />
